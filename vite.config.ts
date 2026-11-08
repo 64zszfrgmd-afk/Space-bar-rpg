@@ -1,8 +1,10 @@
 import {defineConfig} from 'vite';
 
-// GitHub project Pages is served below the repository name, including its case.
-// Keep development, preview, local builds and Actions on the same URLs.
+// Development, preview and GitHub Pages all use the exact project subpath.
 export default defineConfig({
   base: '/Space-bar-rpg/',
-  build: {target: 'safari15.4'},
+  build: {
+    target: 'safari15.4',
+    rollupOptions: {output: {manualChunks: {three: ['three']}}},
+  },
 });

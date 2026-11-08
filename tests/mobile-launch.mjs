@@ -43,11 +43,13 @@ try {
       await page.screenshot({path: new URL(`${name}-portrait.png`, results).pathname});
       await page.setViewportSize({width: 844, height: 390});
       await page.waitForTimeout(150);
-      for (const id of ['camera', 'dance', 'sound', 'joystick']) {
+      for (const id of ['camera', 'dance', 'sound', 'joystick', 'menu', 'run']) {
         const box = await page.locator('#' + id).boundingBox();
         assert.ok(box && box.x >= 0 && box.y >= 0 && box.x + box.width <= 845 && box.y + box.height <= 391, id);
       }
       assert.deepEqual(await page.evaluate(() => [scrollX, scrollY, document.documentElement.scrollWidth <= innerWidth]), [0, 0, true]);
+      const rects=await page.evaluate(()=>['camera','dance','sound','menu','joystick','run'].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return {id,x:r.x,y:r.y,w:r.width,h:r.height}}));
+      for(let i=0;i<rects.length;i++)for(let j=i+1;j<rects.length;j++){const a=rects[i],b=rects[j];assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y, a.id+' overlaps '+b.id)}
       await page.screenshot({path: new URL(`${name}-landscape.png`, results).pathname});
       assert.equal(assets.some(a => a.url.endsWith('.js') && /javascript/.test(a.type)), true);
       assert.equal(assets.some(a => a.url.endsWith('.css') && /css/.test(a.type)), true);
