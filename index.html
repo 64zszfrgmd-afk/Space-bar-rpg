@@ -1,1 +1,47 @@
-<!doctype html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#100e29"><meta name="apple-mobile-web-app-capable" content="yes"><title>Пьяная туманность · Space Bar RPG</title></head><body><div id="app"></div><script type="module" src="/src/main.ts"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#100e29">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+  <title>Пьяная туманность · Space Bar RPG</title>
+  <style>
+    #startup{position:fixed;inset:0;z-index:100;display:grid;place-content:center;gap:16px;padding:32px;background:#100e29;color:#fff6eb;font:16px system-ui;text-align:center}
+    #startup[hidden],#startup button[hidden]{display:none}
+    #startup p{max-width:32em;line-height:1.6}
+    #startup button{min-height:48px;padding:12px 20px;border:1px solid #fff8;border-radius:12px;background:#514061;color:inherit;font:inherit}
+  </style>
+</head>
+<body>
+  <div id="startup" role="status" aria-live="polite">
+    <h1>Бар на краю Вселенной</h1>
+    <p id="startup-message">Загружаем бар и запускаем 3D…</p>
+    <button id="startup-retry" hidden>Перезагрузить игру</button>
+    <noscript>Для игры нужно включить JavaScript в Safari.</noscript>
+  </div>
+  <div id="app"></div>
+  <script>
+    (() => {
+      const panel = document.getElementById('startup');
+      const message = document.getElementById('startup-message');
+      let ready = false, failed = false;
+      const fail = text => {
+        if (failed) return;
+        failed = true;
+        panel.hidden = false;
+        message.textContent = text || 'Не удалось загрузить игру. Проверьте интернет и перезагрузите страницу. Открывайте игру по HTTPS-ссылке в Safari, а не в предпросмотре ZIP.';
+        document.getElementById('startup-retry').hidden = false;
+      };
+      document.getElementById('startup-retry').onclick = () => location.reload();
+      window.addEventListener('spacebar:ready', () => {if (!failed) {ready = true;panel.hidden = true}});
+      window.addEventListener('spacebar:error', event => fail(event.detail));
+      window.addEventListener('error', () => {if (!ready) fail()}, true);
+      window.addEventListener('unhandledrejection', () => {if (!ready) fail()});
+      setTimeout(() => {if (!ready) fail('Загрузка занимает слишком много времени. Проверьте интернет и перезагрузите игру в Safari.');}, 30000);
+    })();
+  </script>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
