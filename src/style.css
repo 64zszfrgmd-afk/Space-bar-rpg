@@ -10,3 +10,14 @@ button{min-height:44px}
 .modal{max-height:85vh;max-height:85dvh;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 #joystick{left:max(24px,env(safe-area-inset-left,0px));bottom:calc(95px + env(safe-area-inset-bottom,0px))}
 @media(max-height:500px){.hud{padding-top:12px}.brand h1{font-size:18px}.brand p,.brand small{display:none}.top{flex-direction:row;gap:10px}.stats{gap:5px}.stat{min-width:80px;padding:8px}.actions button{padding:10px;font-size:11px}#interact{bottom:120px}#toast{top:90px}#joystick{bottom:70px;width:100px;height:100px}#stick{left:30px;top:30px}}
+/* Restored 0.20 HUD: safe areas and independent touch targets. */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.stat{min-width:95px}.quest{position:absolute;left:24px;top:115px;max-width:min(560px,85vw);font-size:12px;background:#18162bdf;padding:10px 14px;border-radius:12px;line-height:1.5;margin:0}
+#toast{top:190px}#run{position:fixed;left:max(42px,env(safe-area-inset-left));bottom:calc(220px + env(safe-area-inset-bottom));touch-action:none;user-select:none;-webkit-user-select:none}#run.active{background:#6c588d}.modal button{white-space:pre-line;line-height:1.6}.modal{width:min(560px,100%)}
+@media(max-width:700px){.top{gap:9px}.stats{width:100%;gap:5px}.stat{min-width:0;padding:8px}.stat span{font-size:8px}.stat b{font-size:13px}.brand h1{margin:5px 0}.quest{left:18px;top:155px;max-width:calc(100vw - 36px);font-size:11px;padding:7px 10px}#toast{top:225px}#interact{bottom:210px;left:auto;right:18px;transform:none;max-width:60vw;white-space:normal}.actions{max-width:220px}.actions button{padding:10px;min-height:44px}}
+@media(max-height:500px){.stats{max-width:430px}.stat{min-width:0;padding:6px}.stat b{font-size:13px}.stat span{font-size:8px}.quest{top:86px;left:140px;max-width:calc(100vw - 280px);font-size:10px;padding:6px}#toast{top:140px}.actions{max-width:230px;flex-wrap:wrap;justify-content:flex-end}#interact{bottom:125px;left:auto;right:18px;transform:none;max-width:50vw;white-space:normal}#run{bottom:185px;left:42px}.brand{max-width:220px}.hud{padding-top:max(10px,env(safe-area-inset-top))}}
+
+.actions{margin-left:auto}
+
+/* Flow below the stats, including wrapped numbers on compact iPhones. */
+.quest{position:static;width:fit-content;margin:10px 0 0}
+@media(max-height:500px){.quest{margin-left:122px}}
