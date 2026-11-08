@@ -2,6 +2,8 @@
 
 Проверено 2026-11-08. Репозиторий: `64zszfrgmd-afk/Space-bar-rpg`.
 
+**Обновление после публикации:** PR №2 объединён в `main` (`eab6e5c`), Pages включён, deployment [42497241242](https://github.com/64zszfrgmd-afk/Space-bar-rpg/actions/runs/42497241242) успешен. HTTPS-сайт отвечает 200 и совпадает со сборкой 0.1.0. Следующие пункты описывают прежнюю неисправность до этих действий. Актуальные сравнение с отсутствующей 0.20 и план переноса — в [VERSION-COMPARISON.md](VERSION-COMPARISON.md).
+
 ## Подтверждённые причины недоступности
 
 1. Игра из PR №1 уже объединена в `main` (`a25cd3a`). В workflow [42492783891](https://github.com/64zszfrgmd-afk/Space-bar-rpg/actions/runs/42492783891) сборка и upload успешны, но deploy завершился `Failed to create deployment (status: 404)` с указанием `Ensure GitHub Pages has been enabled`. GitHub Pages нужно включить в настройках репозитория.

@@ -4,12 +4,16 @@ import {mkdir, writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {pagesBase, servePages} from './pages-server.mjs';
 
-const results = new URL('../test-results/', import.meta.url);
+const results = new URL(process.env.SPACEBAR_TEST_URL ? '../test-results/published/' : '../test-results/', import.meta.url);
 await mkdir(results, {recursive: true});
-const host = await servePages();
+const published = process.env.SPACEBAR_TEST_URL ? new URL(process.env.SPACEBAR_TEST_URL) : null;
+if (published && (published.protocol !== 'https:' || published.pathname !== pagesBase || published.search || published.hash)) {
+  throw new Error(`SPACEBAR_TEST_URL must be an HTTPS project URL ending in ${pagesBase}`);
+}
 const reports = [];
 const requested = (process.env.SPACEBAR_BROWSERS || 'chromium,webkit').split(',');
 if (!requested.length || requested.some(name => !['chromium', 'webkit'].includes(name))) throw new Error('SPACEBAR_BROWSERS must contain chromium and/or webkit');
+const host = published ? {origin: published.origin, close: async () => {}} : await servePages();
 try {
   for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     if (!requested.includes(name)) continue;
@@ -74,5 +78,5 @@ try {
       console.log(`PASS ${name}: rendered 3D, subpath JS/CSS, mobile controls, both orientations, asset/WebGL failure messages`);
     } finally {await browser.close()}
   }
-  await writeFile(new URL('mobile-launch.json', results), JSON.stringify({testedAt: new Date().toISOString(), requestedEngines: requested, physicalIPhoneTested: false, reports}, null, 2) + '\n');
+  await writeFile(new URL('mobile-launch.json', results), JSON.stringify({testedAt: new Date().toISOString(), testedUrl: host.origin + pagesBase, requestedEngines: requested, physicalIPhoneTested: false, reports}, null, 2) + '\n');
 } finally {await host.close()}
