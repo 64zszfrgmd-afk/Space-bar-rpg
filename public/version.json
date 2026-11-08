@@ -1,0 +1,9 @@
+{
+  "version": "0.20.0",
+  "revision": "history-2",
+  "destinations": 9,
+  "npc": 23,
+  "playableSpecies": 5,
+  "quests": 10,
+  "multiplayer": false
+}

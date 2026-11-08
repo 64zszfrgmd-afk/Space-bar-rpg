@@ -1,11 +1,31 @@
 export const VERSION = '0.20.0';
-export const NPC_IDS = ['bip', 'zora', 'quik', 'plukh', 'borks', 'zip'] as const;
+export const CONTENT_REVISION = 'history-2';
+export const VENUE_IDS = ['nebula','meridian','rust','comet','plankton','abyss','orbit','echo','cabin'] as const;
+export type VenueId = typeof VENUE_IDS[number];
+export const SPECIES_IDS = ['human','crystal','mycelian','orbion','ribbon'] as const;
+export type SpeciesId = typeof SPECIES_IDS[number];
+export const JOB_IDS = ['beat','coil','parcel','shells','quiet','letter','stars'] as const;
+export type JobId = typeof JOB_IDS[number];
+export interface JobState {status:QuestStatus; progress:number}
+export type Quality = 'auto'|'low'|'balanced'|'high';
+export const NPC_IDS = ['bip', 'zora', 'quik', 'plukh', 'borks', 'zip','lyra','grog','mira','tick','vella','rusk','koro','zhu','paf','nai','myxa','om','yul','aori','qbit','il','oro'] as const;
 export type NpcId = typeof NPC_IDS[number];
 export type QuestStatus = 'new'|'active'|'ready'|'done';
 export type QuestId = 'party'|'syrup';
 export interface Relation {points: number; greetDay: number; treatDay: number; gift: boolean}
 export interface GameState {
-  schema: 1;
+  schema: 2;
+  revision:string;
+  hero:{name:string;species:SpeciesId;color:string;accessory:'none'|'halo'|'hat';dance:0|1|2};
+  settings:{quality:Quality;volume:number};
+  venue:VenueId;
+  visited:VenueId[];
+  story:number;
+  reputation:number;
+  inventory:string[];
+  npcMoods:Record<string,number>;
+  jobs:Record<JobId,JobState>;
+  rhythm:{best:number;day:number;paid:number};
   version: string;
   credits: number;
   energy: number;

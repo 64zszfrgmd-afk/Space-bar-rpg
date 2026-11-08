@@ -18,7 +18,7 @@ export async function servePages() {
       const file = resolve(dist, pathname.slice(pagesBase.length) || 'index.html');
       if (!file.startsWith(resolve(dist) + sep)) {response.writeHead(403);response.end();return}
       if (!(await stat(file)).isFile()) {response.writeHead(404);response.end();return}
-      const mime = file.endsWith('.js') ? 'application/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.html') ? 'text/html' : 'application/octet-stream';
+      const mime = file.endsWith('.js') ? 'application/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.html') ? 'text/html' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream';
       response.writeHead(200, {'content-type': mime + '; charset=utf-8', 'cache-control': 'no-store'});
       response.end(await readFile(file));
     } catch {response.writeHead(404);response.end()}

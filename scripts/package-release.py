@@ -14,7 +14,8 @@ tracked = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().
 files = sorted([root / name for name in tracked if name] + [p for p in (root / 'dist').rglob('*') if p.is_file()])
 if not (root / 'dist/index.html').is_file():
     raise SystemExit('Run npm run build before packaging.')
-manifest = {'version': version, 'reconstructed': True, 'baseVersion': '0.1.0', 'sourceCommit': commit,
+metadata = json.loads((root / 'public/version.json').read_text()) if (root / 'public/version.json').exists() else {}
+manifest = {'revision': metadata.get('revision','restore-1'), 'version': version, 'reconstructed': True, 'baseVersion': '0.1.0', 'sourceCommit': commit,
             'files': {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
 out = root / 'artifacts'
 out.mkdir(exist_ok=True)
