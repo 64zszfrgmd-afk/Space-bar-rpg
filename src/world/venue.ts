@@ -36,7 +36,7 @@ export function buildVenue(venue:Venue):Room{
   for(const x of [-8,-4]){const engine=add(new THREE.ConeGeometry(.4,1,10,1,true),dark,x,4.3,-1.8);engine.rotation.z=Math.PI;cyl(.35,.05,accent,x,3.8,-1.8)}
  }else if(venue.theme==='ocean'){
   for(const z of [-5,1,6]){const dome=add(new THREE.TorusGeometry(10,.06,5,36,Math.PI),accent,0,0,z);dome.rotation.z=0}
-  for(const x of [-10.5,10.5])for(const z of [-4,3]){const tube=cyl(.23,3,m,x,1.5,z);tube.material=mat('#4c989d');for(let i=0;i<3;i++)ball(.12,accent,x,1.8+i*.45,z)}
+  for(const x of [-10.5,10.5])for(const z of [-4,3]){const tube=cyl(.23,3,m,x,1.5,z);tube.material=mat('#4c989d');obstacles.push({x,z,w:.46,d:.46});for(let i=0;i<3;i++)ball(.12,accent,x,1.8+i*.45,z)}
  }else if(venue.theme==='cloud'){
   for(const [x,z] of [[-7,-2],[6,1],[0,-6]]){const halo=add(new THREE.TorusGeometry(1.15,.08,6,32),accent,x,4.1,z);halo.rotation.x=Math.PI/2;for(let i=0;i<3;i++){const cloud=ball(.65,mat('#9d9dce'),x+(i-1)*.6,4.5,z);cloud.scale.y=.4}}
  }else if(venue.kind==='club'){
