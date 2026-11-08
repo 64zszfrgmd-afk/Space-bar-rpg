@@ -72,7 +72,9 @@ CI запускает Chromium и WebKit. Локально один движок
 
 `vite.config.ts` задаёт `base: '/Space-bar-rpg/'`, цель Safari 15.4+. В **Settings → Pages → Source** выберите **GitHub Actions**. Workflow `.github/workflows/deploy.yml` проверяет PR; публикует `dist` только из main после объединения. Владельцу нужно проверить зелёные проверки PR, протестировать предпросмотр и самостоятельно подтвердить merge. Код этой ветки не объединяется автоматически.
 
-ZIP исходников и сборки публикуется в GitHub Releases как предварительный выпуск **0.20 restored**. В архив входят исходники, lockfile, документация, тесты и `dist`; node_modules, кеш и сохранения пользователей не включаются. Список файлов, исходный коммит и хеши находятся в RELEASE-MANIFEST.json; SHA-256 ZIP прилагается к выпуску. Для повторной упаковки: `npm run build`, затем `python3 scripts/package-release.py` из чистого закоммиченного checkout. ZIP не устанавливается как приложение на iPhone: игра открывается по HTTPS.
+ZIP исходников и сборки публикуется в GitHub Releases как предварительный выпуск **0.20 restored**. Для выпуска архива: Actions → Test and deploy GitHub Pages → Run workflow → ветка `feature/restore-v020` → `publish_preview` = true. Сначала проходят все проверки; отдельное задание с `contents: write` загружает ZIP и публикует prerelease. Этот запуск не публикует Pages и не выполняет merge. Обычный PR не получает права записи релиза.
+
+В архив входят исходники, lockfile, документация, тесты и `dist`; node_modules, кеш и сохранения пользователей не включаются. Список файлов, исходный коммит и хеши находятся в RELEASE-MANIFEST.json; SHA-256 ZIP прилагается к выпуску. Для повторной упаковки: `npm run build`, затем `python3 scripts/package-release.py` из чистого закоммиченного checkout. ZIP не устанавливается как приложение на iPhone: игра открывается по HTTPS.
 
 ## Ограничения
 

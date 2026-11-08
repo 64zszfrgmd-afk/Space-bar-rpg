@@ -19,3 +19,5 @@
 ZIP формируется `python3 scripts/package-release.py` после чистого коммита и сборки, проверяет CRC, наличие исходников/готового index.html/версии. `RELEASE-MANIFEST.json` содержит sourceCommit и SHA-256 каждого файла, отдельный `.sha256` — SHA-256 архива. Production из ветки восстановления не публикуется: Pages deploy разрешён только из main после ручного merge владельцем.
 
 CI [42509683714](https://github.com/64zszfrgmd-afk/Space-bar-rpg/actions/runs/42509683714) подтвердил оба движка и задания на исходном коммите восстановления. Затем исправлено перекрытие строки задания на экране 320 px: HUD переведён в обычный поток под показателями, компактные экраны добавлены в обязательные проверки. Результат последней ревизии — в Checks PR №4.
+
+Загрузка assets из локального Cloud CLI получила HTTP 401 на uploads.github.com. Поэтому архив выпускается вручную через существующий workflow_dispatch в GitHub Actions; отдельный release_preview job получает contents: write, только после build и только для feature/restore-v020. PR и Pages deploy сохраняют прежние ограничения.
