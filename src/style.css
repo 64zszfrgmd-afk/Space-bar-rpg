@@ -17,3 +17,7 @@ button{min-height:44px}
 @media(max-height:500px){.stats{max-width:430px}.stat{min-width:0;padding:6px}.stat b{font-size:13px}.stat span{font-size:8px}.quest{top:86px;left:140px;max-width:calc(100vw - 280px);font-size:10px;padding:6px}#toast{top:140px}.actions{max-width:230px;flex-wrap:wrap;justify-content:flex-end}#interact{bottom:125px;left:auto;right:18px;transform:none;max-width:50vw;white-space:normal}#run{bottom:185px;left:42px}.brand{max-width:220px}.hud{padding-top:max(10px,env(safe-area-inset-top))}}
 
 .actions{margin-left:auto}
+
+/* Flow below the stats, including wrapped numbers on compact iPhones. */
+.quest{position:static;width:fit-content;margin:10px 0 0}
+@media(max-height:500px){.quest{margin-left:122px}}
