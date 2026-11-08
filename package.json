@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "npm run build && node --test tests/*.test.mjs",
-    "test:browser": "node tests/mobile-launch.mjs"
+    "test:browser": "node tests/mobile-launch.mjs",
+    "audit:published": "npm run build && node scripts/audit-published.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
