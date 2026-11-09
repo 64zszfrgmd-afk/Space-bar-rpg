@@ -178,6 +178,8 @@ const router=new WorldRouter(scene,{group:originalRoom,seats:originalSeats,obsta
 let renderedLocation:VenueId|null=null;
 function switchVenue(id:VenueId,persist=true):boolean{
  if(!canTravel(state,id)){toast(storyHints[state.story]);return false}
+ for(const [key,layer] of actorLayers)if(layer.parent!==scene){scene.add(layer);diagnostics.report('NPC_LAYER_REATTACHED',key,'Группа жителей возвращена в сцену')}
+ for(const n of npcs){const layer=actorLayers.get(n.venue??'nebula')!;if(n.mesh.parent!==layer){layer.add(n.mesh);n.mesh.position.set(n.x,0,n.z);diagnostics.report('NPC_REATTACHED',n.id,'Модель возвращена в свою локацию')}}
  const beforeBackground=scene.background,beforeFog=scene.fog,v=venueById(id),arrival=overviewCamera(innerWidth/innerHeight);
  const room=router.load(id,()=>{
   scene.background=new THREE.Color(id==='nebula'?'#100e29':v.wall);scene.fog=new THREE.FogExp2(id==='nebula'?'#16112c':v.wall,.022);
@@ -197,7 +199,7 @@ function residents(){dialog.show('Жители · '+venueById(state.venue).name,
  for(const n of activeNpcs())dialog.choice(n.name,()=>{closeDialog();leaveOverview();yaw=Math.atan2(player.position.x-n.x,player.position.z-n.z);pitch=firstPerson?0:.1;toast(n.name+' · иди в направлении взгляда. E — поговорить рядом.')},false,'locate-'+n.id);
  if(!activeNpcs().length)dialog.text('В каюте можно отдохнуть и изменить внешность в зеркале.');dialog.choice('Назад в меню',menu);
 }
-function worldStatus(){dialog.show('Состояние мира',`Версия ${VERSION} · ${CONTENT_REVISION}\nЛокация: ${venueById(state.venue).name}\n3D-сцена: ${renderedLocation??'не загружена'} · ${router.status}\nЖители: ${activeNpcs().filter(n=>modelIsVisible(n.mesh)).length}/${activeNpcs().length}`);
+function worldStatus(){dialog.show('Состояние мира',`Версия ${VERSION} · ${CONTENT_REVISION}\nЛокация: ${venueById(state.venue).name}\n3D-сцена: ${renderedLocation??'не загружена'} · ${router.status}\nМодели жителей в сцене: ${activeNpcs().filter(n=>modelIsVisible(n.mesh)).length}/${activeNpcs().length}`);
  for(const issue of diagnostics.snapshot())dialog.text(`${issue.code} · ${issue.subject}: ${issue.message}`);
  if(!diagnostics.snapshot().length)dialog.text('Ошибок загрузки сцен и персонажей не зарегистрировано.');dialog.choice('Повторить загрузку текущей локации',()=>switchVenue(state.venue),false,'retry-location');dialog.choice('Назад в меню',menu);
 }

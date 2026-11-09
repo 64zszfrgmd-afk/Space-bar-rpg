@@ -6,7 +6,7 @@ export function overviewCamera(aspect:number):THREE.PerspectiveCamera {
  for(const x of [-11.2,11.2])for(const y of [-.4,10.2])for(const z of [-9.8,9.8]){const point=new THREE.Vector3(x,y,z).sub(center);distance=Math.max(distance,point.dot(direction)+Math.max(Math.abs(x)/tanH,Math.abs(point.dot(up))/tanV))}
  camera.position.copy(center).addScaledVector(direction,distance*1.04);camera.lookAt(center);camera.updateProjectionMatrix();camera.updateMatrixWorld();return camera;
 }
-export function modelIsVisible(root:THREE.Object3D):boolean {for(let node:THREE.Object3D|null=root;node;node=node.parent)if(!node.visible)return false;return !!root.parent}
+export function modelIsVisible(root:THREE.Object3D):boolean {let attached=false;for(let node:THREE.Object3D|null=root;node;node=node.parent){if(!node.visible)return false;if(node instanceof THREE.Scene)attached=true}return attached}
 export function validateModel(root:THREE.Object3D):number {
  let meshes=0;root.traverse(node=>{if(node instanceof THREE.Mesh){const positions=node.geometry.getAttribute('position');if(!positions||positions.count===0)throw Error('У модели нет вершин');meshes++}});
  const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3());
