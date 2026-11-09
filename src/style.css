@@ -21,3 +21,8 @@ button{min-height:44px}
 /* Flow below the stats, including wrapped numbers on compact iPhones. */
 .quest{position:static;width:fit-content;margin:10px 0 0}
 @media(max-height:500px){.quest{margin-left:122px}}
+.modal label{display:block;margin:16px 0 5px;color:#d2c8e1;font-size:14px}.modal input{display:block;margin-top:7px;width:100%;min-height:44px;border:1px solid #ffffff40;border-radius:12px;background:#332d4c;color:#fff6eb;padding:10px;font:inherit}.modal input[type=color]{padding:4px}.modal input[type=range]{padding:0;accent-color:#80ded2}
+#rhythm-panel{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:190px;width:min(240px,65vw);padding:12px;background:#211d38ef;border:1px solid #a18cce;border-radius:16px;text-align:center}#rhythm-panel button{margin-top:8px;padding:10px;min-height:44px}#rhythm-panel strong{display:block}.rhythm-meter{height:5px;background:#585071;margin-top:8px;border-radius:5px}.rhythm-meter i{display:block;height:100%;background:#a0f2de}.beat-active{box-shadow:0 0 30px #68eee488}#rhythm-panel.beat-active strong{color:#a0f2de}
+@media(max-height:500px){#rhythm-panel{bottom:125px;right:18px;width:220px;padding:8px}#rhythm-panel button{margin-top:5px}}
+
+.brand p#pilot-name{display:block;max-width:270px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px}

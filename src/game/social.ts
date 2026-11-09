@@ -11,11 +11,11 @@ export function meet(state:GameState,id:NpcId):boolean {
 export function greet(state:GameState,id:NpcId):void {
   if(!state.met.includes(id))return;
   const r=relation(state,id);if(r.greetDay===currentDay(state))return;
-  r.greetDay=currentDay(state);addFriendship(state,id,1);
+  r.greetDay=currentDay(state);state.npcMoods[id]=bound((state.npcMoods[id]??50)+1);addFriendship(state,id,1);
 }
 export function treat(state:GameState,id:NpcId):boolean {
   const r=relation(state,id);if(!state.met.includes(id)||r.treatDay===currentDay(state)||state.credits<10)return false;
-  state.credits-=10;r.treatDay=currentDay(state);addFriendship(state,id,2);return true;
+  state.credits-=10;state.npcMoods[id]=bound((state.npcMoods[id]??50)+5);r.treatDay=currentDay(state);addFriendship(state,id,2);return true;
 }
 export function claimGift(state:GameState,id:NpcId):boolean {
   const r=relation(state,id);if(r.gift||r.points<6)return false;r.gift=true;state.credits+=25;return true;

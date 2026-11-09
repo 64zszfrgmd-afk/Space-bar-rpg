@@ -41,3 +41,17 @@ test('the repository URL redirects to its canonical trailing slash', async () =>
     assert.equal(response.headers.get('location'), pagesBase);
   } finally {await host.close()}
 });
+
+test('build identity is available as JSON at the Pages project path', async () => {
+  const metadata = JSON.parse(await readFile(join(dist, 'version.json'), 'utf8'));
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(metadata.version, pkg.version);
+  assert.equal(metadata.revision, 'history-2');
+  const host = await servePages();
+  try {
+    const response = await fetch(host.origin + pagesBase + 'version.json');
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-type'), /application\/json/);
+    assert.deepEqual(await response.json(), metadata);
+  } finally {await host.close()}
+});

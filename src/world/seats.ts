@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type {Seat} from '../game/types';
-export function createSeating(scene:THREE.Scene,obstacles:{x:number;z:number;w:number;d:number}[]):Seat[]{
+export function createSeating(scene:THREE.Object3D,obstacles:{x:number;z:number;w:number;d:number}[]):Seat[]{
   const seats:Seat[]=Array.from({length:4},(_,i)=>({id:`stool-${i+1}`,name:`Барный стул ${i+1}`,x:-8+i*1.9,z:-3.7,height:.88,yaw:0,exits:[{x:-8+i*1.9,z:-2.5}]}));
   const upholstery=new THREE.MeshStandardMaterial({color:'#bd639a',roughness:.9}),trim=new THREE.MeshStandardMaterial({color:'#6f4b87'});
   const box=(w:number,h:number,d:number,x:number,y:number,z:number,material=upholstery)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);scene.add(m)};
@@ -10,7 +10,7 @@ export function createSeating(scene:THREE.Scene,obstacles:{x:number;z:number;w:n
   }
   return seats;
 }
-export function posePlayer(player:THREE.Group,seated:Seat|null,time:number,moving:boolean,dancing:boolean){
+export function posePlayer(player:THREE.Group,seated:Seat|null,time:number,moving:boolean,dancing:boolean,style=0){
   player.scale.y=seated?.78:1;
   player.position.y=seated?seated.height-.625*.78:dancing?Math.abs(Math.sin(time*7))*.17:moving?Math.sin(time*12)*.035:0;
   player.rotation.z=dancing?Math.sin(time*7)*.15:0;
@@ -18,5 +18,7 @@ export function posePlayer(player:THREE.Group,seated:Seat|null,time:number,movin
     const leg=player.getObjectByName(name)!;leg.position.y=seated?.65:.3;leg.position.z=seated?.24:0;leg.rotation.x=seated?Math.PI/2:moving?Math.sin(time*12+i*Math.PI)*.45:dancing?Math.sin(time*7+i)*.4:0;
   }
   for(const [i,name] of ['arm-left','arm-right'].entries())player.getObjectByName(name)!.rotation.x=seated?-.35:dancing?Math.sin(time*7+i)*.7:moving?Math.sin(time*12+i*Math.PI)*.35:0;
+  if(dancing&&style===1){player.position.y=Math.abs(Math.sin(time*8))*.08;player.rotation.z=Math.sin(time*8)*.07;for(const [i,name] of ['leg-left','leg-right'].entries())player.getObjectByName(name)!.rotation.x=Math.sin(time*8+i*Math.PI)*.65}
+  if(dancing&&style===2){player.position.y=.02;player.rotation.z=Math.sin(time*5)*.1;for(const [i,name] of ['arm-left','arm-right'].entries())player.getObjectByName(name)!.rotation.x=-1.2+Math.sin(time*5+i)*.4}
   if(seated)player.rotation.y=seated.yaw+Math.PI;
 }

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_preview:
-        description: Publish the tested restored 0.20 ZIP (feature/restore-v020 only)
+        description: Publish the tested 0.20 history-2 ZIP (restore-chat-history only)
         type: boolean
         default: false
         required: false
@@ -57,17 +57,17 @@ jobs:
         uses: actions/deploy-pages@v4
 
   release_preview:
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_preview && github.ref == 'refs/heads/feature/restore-v020'
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_preview && github.ref == 'refs/heads/feature/restore-chat-history'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
     concurrency:
-      group: restored-v020-release
+      group: restored-v020-history-release
       cancel-in-progress: false
     env:
-      RELEASE_TAG: v0.20.0-restored-preview.1
+      RELEASE_TAG: v0.20.0-restored-preview.2
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -85,19 +85,19 @@ jobs:
           set -euo pipefail
           notes="$RUNNER_TEMP/spacebar-release-notes.md"
           cat > "$notes" <<EOF
-          Восстановленная **Space Bar RPG 0.20.0** на базе **0.1.0**, по согласованному ТЗ. Это не оригинальный недоступный архив a8b5510.
+          Восстановленная **Space Bar RPG 0.20.0 / history-2**, поверх опубликованной 0.20. Запросы из доступного чата сопоставлены реализации в docs/RESTORE-HISTORY.md. Это не точная копия недоступного a8b5510.
 
-          Боркс с шестью анимированными руками; семь напитков с подтверждением и бесплатной водой; десять сидений с восстановлением энергии; Зип у танцпола, дружба и два задания. Сохранены прежняя сцена, четыре NPC/рецепта Бипа, камеры, мобильное управление, танцы, музыка и старые сохранения.
+          Сохранены Боркс, семь напитков, десять исходных сидений, два задания Зипа, Бип и его рецепты, камеры, управление и старые сохранения. Добавлены три планеты, четыре бара и четыре клуба (включая исходный), каюта, 23 NPC, пять видов героя, три танца, сюжет с двумя способами вернуть пропуск, семь поручений, ритм-игра, графика и громкость. Всего девять локаций и десять заданий. Перелёты бесплатные. Мультиплеер и свободное ИИ-общение не реализованы.
 
           ZIP содержит исходники и готовый dist. RELEASE-MANIFEST.json указывает коммит и SHA-256 файлов. Файл .sha256 рядом с ZIP проверяет архив. Кеши, node_modules и сохранения пользователей не включены.
 
           Запуск: Node.js 22.12+, npm install, npm run preview -- --port 5173. Путь /Space-bar-rpg/. На iPhone: предпросмотр порта 5173 в Codex Cloud по HTTPS, открыть в Safari. ZIP в приложении «Файлы» не запускает веб-игру.
 
           Исходный коммит: $GITHUB_SHA.
-          Проверки: npm ci, 18 тестов Vitest, TypeScript/Vite, 3 проверки production-ресурсов, Chromium и WebKit (мобильный HUD, покупки, 10 мест, оба задания без алкоголя). Физический iPhone/Android и FPS не проверены.
+          Проверки: npm ci, Vitest, TypeScript/Vite, production URL/MIME, Chromium и WebKit (мобильный HUD, прежние покупки/10 сидений/задания Зипа, обе сюжетные ветки, все девять локаций, семь поручений, герой, настройки и сохранения). Физический iPhone/Android и FPS не проверены.
           [Успешная проверка сборки]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID).
 
-          [Pull Request №4]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/4). main не объединена; production Pages обновится только после подтверждённого владельцем merge. Мультиплеера нет.
+          Ветка feature/restore-chat-history подготовлена в отдельном PR. Production Pages обновится только после подтверждённого владельцем merge; предыдущая опубликованная 0.20 и её ZIP сохранены.
           EOF
           if gh release view "$RELEASE_TAG" --json isDraft >/dev/null 2>&1; then
             if [ "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" != true ]; then
