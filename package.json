@@ -1,6 +1,6 @@
 {
   "name": "space-bar-rpg",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,10 +8,11 @@
     "build": "tsc && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "npm run test:unit && npm run build && node --test tests/*.test.mjs",
-    "test:browser": "node tests/mobile-launch.mjs && node tests/gameplay.mjs && node tests/history-world.mjs",
+    "test:browser": "node tests/mobile-launch.mjs && node tests/gameplay.mjs && node tests/history-world.mjs && node tests/world-visual.mjs",
     "test:unit": "vitest run",
     "test:gameplay": "node tests/gameplay.mjs",
-    "test:world": "node tests/history-world.mjs"
+    "test:world": "node tests/history-world.mjs",
+    "test:visual": "node tests/world-visual.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
