@@ -1,6 +1,6 @@
 {
-  "version": "0.21.0",
-  "revision": "world-fixes-1",
+  "version": "0.21.1",
+  "revision": "touch-flow-1",
   "destinations": 9,
   "npc": 23,
   "playableSpecies": 5,

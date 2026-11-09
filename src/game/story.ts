@@ -14,6 +14,6 @@ export function advanceStory(s:GameState,action:StoryAction):boolean{
  if(s.story!==stages[action])return false;
  s.story++;
  if(action==='physical'||action==='digital'){s.inventory.push('station-pass');s.decisions.push('pass:'+action)}
- if(action==='exit'){s.credits+=40;s.reputation=Math.min(100,s.reputation+5);s.decisions.push('docks:open')}
+ if(action==='exit'){s.travelUnlocked=true;s.credits+=40;s.reputation=Math.min(100,s.reputation+5);s.decisions.push('docks:open')}
  return true;
 }

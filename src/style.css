@@ -26,3 +26,12 @@ button{min-height:44px}
 @media(max-height:500px){#rhythm-panel{bottom:125px;right:18px;width:220px;padding:8px}#rhythm-panel button{margin-top:5px}}
 
 .brand p#pilot-name{display:block;max-width:270px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px}
+/* Temporary 0.21.1 phone trace. It never receives touches or covers modal hit targets. */
+#flow-panel{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:70;pointer-events:none;background:#111024f2;color:#d7fff4;padding:3px 8px;font:10px/13px system-ui;height:32px;overflow:hidden}#flow-panel div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud{padding-top:calc(max(18px,env(safe-area-inset-top,0px)) + 22px)}.brand small{visibility:hidden}
+.modal-shade{z-index:50;padding-top:calc(42px + env(safe-area-inset-top,0px))}.modal{display:flex;flex-direction:column;overflow:hidden;max-height:calc(100dvh - 70px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:12px 20px 20px}.modal-tools{display:flex;justify-content:flex-end;flex-shrink:0}.modal-tools button{width:auto;margin:0;min-height:44px;padding:6px 12px}.modal-body{overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.modal textarea{width:100%;min-height:160px;background:#17132b;color:#e5fff9;font:11px monospace;user-select:text;-webkit-user-select:text}.modal [data-notice]{color:#ffd793;border:1px solid #ffd793;padding:8px;border-radius:10px}.modal button[data-locked=true]{border-color:#d9ad68}
+@media(max-height:500px){.hud{padding-top:46px}.top .brand{display:none}.stats{margin-left:auto}.quest{margin-top:5px}}
+@media(max-width:350px){#interact{max-width:calc(100vw - 150px)}}
+/* Definite flex height avoids clipped, non-scrollable choice lists in mobile Safari. */
+.modal{height:85vh;height:min(760px,calc(100dvh - 72px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))}.modal-body{flex:1}
+@media(max-height:500px){#interact{top:108px;bottom:auto;max-width:calc(100vw - 160px);white-space:nowrap;padding:8px;font-size:11px}}

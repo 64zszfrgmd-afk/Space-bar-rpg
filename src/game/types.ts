@@ -1,5 +1,5 @@
-export const VERSION = '0.21.0';
-export const CONTENT_REVISION = 'world-fixes-1';
+export const VERSION = '0.21.1';
+export const CONTENT_REVISION = 'touch-flow-1';
 export const VENUE_IDS = ['nebula','meridian','rust','comet','plankton','abyss','orbit','echo','cabin'] as const;
 export type VenueId = typeof VENUE_IDS[number];
 export const SPECIES_IDS = ['human','crystal','mycelian','orbion','ribbon'] as const;
@@ -21,6 +21,7 @@ export interface GameState {
   venue:VenueId;
   visited:VenueId[];
   story:number;
+  travelUnlocked:boolean;
   reputation:number;
   inventory:string[];
   npcMoods:Record<string,number>;

@@ -1,3 +1,4 @@
+import {travelAccess,hasPass,docksOpen} from '../game/access';
 import {Dialog} from './dialog';
 import type {NpcDefinition} from '../game/content';
 import {questDefinitions} from '../game/content';
@@ -7,7 +8,7 @@ import {acceptJob,claimJob,deliverJob,canTravel,addJobProgress} from '../game/wo
 import {socialOffer} from '../game/profile';
 import {meet} from '../game/social';
 import type {GameState,VenueId,Quality} from '../game/types';
-interface Hooks {state:()=>GameState;dialog:Dialog;close:()=>void;menu:()=>void;talk:(n:NpcDefinition)=>void;changed:(message:string)=>void;go:(id:VenueId)=>void;hero:()=>void;quality:()=>void;rhythm:()=>void;onFloor:()=>boolean}
+interface Hooks {state:()=>GameState;dialog:Dialog;close:()=>void;menu:()=>void;talk:(n:NpcDefinition)=>void;changed:(message:string)=>void;go:(id:VenueId)=>boolean;approach:(id:NpcDefinition['id'])=>void;hero:()=>void;quality:()=>void;rhythm:()=>void;onFloor:()=>boolean}
 export class HistoryUI {
  constructor(private h:Hooks){}
  private back(){this.h.dialog.choice('Назад в меню',this.h.menu,false,'menu-back')}
@@ -32,8 +33,10 @@ export class HistoryUI {
   if(s.buzz>=60)d.choice('Спросить, почему гравитация сегодня косая',()=>{d.show(n.name,'Гравитация: «Я сегодня вообще-то по расписанию». Собеседник тактично предлагает воды.');d.choice('Пожалуй, возьму воды',()=>this.h.talk(n))});
  }
  addMenu(){const d=this.h.dialog,s=this.h.state();d.text(`${s.hero.name} · ${species.find(x=>x.id===s.hero.species)!.name} · репутация ${s.reputation}/100`);d.choice('Карта планет и заведений',()=>this.map(),false,'map');d.choice('Герой: вид, имя и аксессуары',()=>this.appearance(),false,'appearance');d.choice('Журнал заданий и инвентарь',()=>this.journal(),false,'journal');d.choice('Звук и качество графики',()=>this.settings(),false,'settings');d.choice('Ритм-игра · восемь ударов',this.h.rhythm,!this.h.onFloor(), 'rhythm-start');d.text('Для ритм-игры подойди на светящийся танцпол. Онлайн пока не реализован.');}
- map(){const d=this.h.dialog,s=this.h.state();d.show('Карта путешественника',s.story===6?'Маршрутный транспорт бесплатный: чайный профсоюз субсидирует знакомства.':'Сначала восстанови пропуск и открой доки. '+storyHints[s.story]);
-  for(const v of venues)d.choice(`${s.venue===v.id?'● ':s.visited.includes(v.id)?'✓ ':''}${v.planet} · ${v.name}\n${v.description}`,()=>this.h.go(v.id),!canTravel(s,v.id),'travel-'+v.id);this.back();
+ map(){const d=this.h.dialog,s=this.h.state();d.show('Карта путешественника',docksOpen(s)?'Доки открыты. Все маршруты бесплатны.':hasPass(s)?'Пропуск есть, осталось предъявить его.':'Пропуска пока нет. '+storyHints[s.story]);
+  if(hasPass(s)&&!docksOpen(s))d.choice('Предъявить пропуск и открыть доки',()=>{if(advanceStory(s,'exit'))this.h.changed('Пропуск принят, доки открыты. Награда выдаётся один раз.');this.map()},false,'validate-pass');
+  if(!hasPass(s)&&!docksOpen(s)){const helper=(['borks','zip','lyra','lyra','mira'] as const)[Math.min(s.story,4)];d.choice('Подойти к тому, кто поможет с пропуском',()=>this.h.approach(helper),false,'pass-help')}
+  for(const v of venues){const access=travelAccess(s,v.id);const b=d.choice(`${s.venue===v.id?'● ':s.visited.includes(v.id)?'✓ ':''}${v.planet} · ${v.name}\n${access.allowed?v.description:'Проверить ограничение: '+access.message}`,()=>{this.h.go(v.id)},false,'travel-'+v.id);b.dataset.locked=String(!access.allowed)}this.back();
  }
  journal(){const d=this.h.dialog,s=this.h.state();d.show('Журнал путешественника','Текущая локация: '+venueById(s.venue).name);d.text(`Куда делся мой корабль? ${s.story===6?'✓ завершено':'Этап '+(s.story+1)+'/6'}\n${storyHints[s.story]}`);
   for(const id of ['party','syrup'] as const)d.text(`${questDefinitions[id].name}: ${this.status(s.quests[id])}`);
