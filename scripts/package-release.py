@@ -15,11 +15,13 @@ files = sorted([root / name for name in tracked if name] + [p for p in (root / '
 if not (root / 'dist/index.html').is_file():
     raise SystemExit('Run npm run build before packaging.')
 metadata = json.loads((root / 'public/version.json').read_text()) if (root / 'public/version.json').exists() else {}
-manifest = {'revision': metadata.get('revision','restore-1'), 'version': version, 'reconstructed': True, 'baseVersion': '0.1.0', 'sourceCommit': commit,
+if metadata.get('version') != version or json.loads((root / 'dist/version.json').read_text()) != metadata:
+    raise SystemExit('Build/version identity is stale; run npm run build.')
+manifest = {'revision': metadata.get('revision','restore-1'), 'version': version, 'baseVersion': '0.20.0', 'sourceCommit': commit,
             'files': {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
 out = root / 'artifacts'
 out.mkdir(exist_ok=True)
-archive = out / f'spacebar-rpg-{version}-restored.zip'
+archive = out / f'spacebar-rpg-{version}.zip'
 prefix = f'Space-bar-rpg-{version}/'
 with ZipFile(archive, 'w', ZIP_DEFLATED) as z:
     for p in files:
@@ -27,7 +29,7 @@ with ZipFile(archive, 'w', ZIP_DEFLATED) as z:
     z.writestr(prefix + 'RELEASE-MANIFEST.json', json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
 with ZipFile(archive) as z:
     assert z.testzip() is None
-    assert json.loads(z.read(prefix + 'package.json'))['version'] == '0.20.0'
+    assert json.loads(z.read(prefix + 'package.json'))['version'] == version
     assert prefix + 'dist/index.html' in z.namelist()
 checksum = hashlib.sha256(archive.read_bytes()).hexdigest()
 (archive.with_suffix('.zip.sha256')).write_text(f'{checksum}  {archive.name}\n')

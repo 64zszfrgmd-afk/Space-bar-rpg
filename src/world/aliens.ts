@@ -36,6 +36,6 @@ export function alien(species:SpeciesId,color:string,accessory:'none'|'halo'|'ha
 }
 export function disposeGroup(root:THREE.Object3D,protectedMaterials:THREE.Material[]=[]){
  const geometry=new Set<THREE.BufferGeometry>(),materials=new Set<THREE.Material>(),textures=new Set<THREE.Texture>();
- root.traverse(node=>{if(node instanceof THREE.Mesh){geometry.add(node.geometry);for(const m of Array.isArray(node.material)?node.material:[node.material])if(!protectedMaterials.includes(m))materials.add(m)}});
+ root.traverse(node=>{if(node instanceof THREE.InstancedMesh)node.dispose();if(node instanceof THREE.Mesh){geometry.add(node.geometry);for(const m of Array.isArray(node.material)?node.material:[node.material])if(!protectedMaterials.includes(m))materials.add(m)}});
  for(const m of materials){const map=(m as THREE.MeshStandardMaterial).map;if(map)textures.add(map);m.dispose()}for(const t of textures)t.dispose();for(const g of geometry)g.dispose();root.removeFromParent();
 }

@@ -1,0 +1,196 @@
+{
+  "errors": [],
+  "report": [
+    {
+      "venue": "nebula",
+      "actors": [
+        {
+          "id": "bip",
+          "name": "Бип · бармен",
+          "visiblePixelsAtArrival": 996,
+          "parent": "Scene"
+        },
+        {
+          "id": "zora",
+          "name": "Зора · навигатор",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "quik",
+          "name": "Квик · ботаник",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "plukh",
+          "name": "Лорд Плюх · отпускник",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "borks",
+          "name": "Боркс · шестирукий бармен",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "zip",
+          "name": "Зип · любитель танцев",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "lyra",
+          "name": "Лира · путешественница",
+          "visiblePixelsAtArrival": 3868,
+          "parent": "Scene"
+        },
+        {
+          "id": "grog",
+          "name": "Капитан Грог",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "mira",
+          "name": "Мира-7 · андроид",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        }
+      ],
+      "objects": 131
+    },
+    {
+      "venue": "meridian",
+      "actors": [
+        {
+          "id": "tick",
+          "name": "Тик-Такт · DJ",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "vella",
+          "name": "Велла · гравитолог",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        }
+      ],
+      "objects": 51
+    },
+    {
+      "venue": "rust",
+      "actors": [
+        {
+          "id": "rusk",
+          "name": "Руск · хозяин буксира",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "koro",
+          "name": "Коро · сборщик закатов",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        }
+      ],
+      "objects": 60
+    },
+    {
+      "venue": "comet",
+      "actors": [
+        {
+          "id": "zhu",
+          "name": "Жу-Флюкс · бармен",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "paf",
+          "name": "Паф · курьер невозможного",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        }
+      ],
+      "objects": 55
+    },
+    {
+      "venue": "plankton",
+      "actors": [
+        {
+          "id": "nai",
+          "name": "Найя · смотритель купола",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "myxa",
+          "name": "Микса · садовник света",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        }
+      ],
+      "objects": 75
+    },
+    {
+      "venue": "abyss",
+      "actors": [
+        {
+          "id": "om",
+          "name": "Ом-Ом · хранитель пауз",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "yul",
+          "name": "Юль-Ноль · исследователь эха",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        }
+      ],
+      "objects": 68
+    },
+    {
+      "venue": "orbit",
+      "actors": [
+        {
+          "id": "aori",
+          "name": "Аори · чайный архитектор",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "qbit",
+          "name": "Кью-Бит · почтальон облаков",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        }
+      ],
+      "objects": 70
+    },
+    {
+      "venue": "echo",
+      "actors": [
+        {
+          "id": "il",
+          "name": "Иль · хранитель звёзд",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        },
+        {
+          "id": "oro",
+          "name": "Оро · складыватель пространства",
+          "visiblePixelsAtArrival": 0,
+          "parent": "Scene"
+        }
+      ],
+      "objects": 65
+    },
+    {
+      "venue": "cabin",
+      "actors": [],
+      "objects": 44
+    }
+  ]
+}
