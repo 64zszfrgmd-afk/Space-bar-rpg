@@ -186,7 +186,7 @@ function switchVenue(id:VenueId,persist=true):boolean{
   if(renderer.getContext().isContextLost())throw Error('WebGL-контекст потерян');
   renderer.compile(scene,arrival);renderer.render(scene,arrival);
  });
- if(!room){scene.background=beforeBackground;scene.fog=beforeFog;if(!router.current){state.venue='nebula';switchVenue('nebula',false)}toast('Не удалось открыть «'+v.name+'». Предыдущая локация сохранена. Открой меню → Состояние мира.');return false}
+ if(!room){scene.background=beforeBackground;scene.fog=beforeFog;if(!router.current&&id!=='nebula'){state.venue='nebula';switchVenue('nebula',false)}toast('Не удалось открыть «'+v.name+'». Предыдущая локация сохранена. Открой меню → Состояние мира.');return false}
  closeDialog();stopRhythm();input.reset();
  generated=id==='nebula'?null:room;seats=room.seats;activeObstacles=room.obstacles;activeTiles=room.tiles;
  seating=new Seating(seats);travel(state,id);player.position.set(0,0,-.5);player.rotation.set(0,Math.PI,0);yaw=0;pitch=.2;overview=!firstPerson;
