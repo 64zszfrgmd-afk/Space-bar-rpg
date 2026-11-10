@@ -1,9 +1,10 @@
+import {travelAccess} from './access';
 import {npcDefinitions} from './content';
 import {localJobs,worldItems} from './world-data';
 import {venues} from './world-data';
 import type {GameState,JobId,NpcId,VenueId} from './types';
 import {addFriendship,meet} from './social';
-export function canTravel(s:GameState,id:VenueId):boolean{return venues.some(v=>v.id===id)&&(id==='nebula'||s.story===6)}
+export function canTravel(s:GameState,id:VenueId):boolean{return travelAccess(s,id).allowed}
 export function travel(s:GameState,id:VenueId):boolean{if(!canTravel(s,id))return false;s.venue=id;if(!s.visited.includes(id))s.visited.push(id);return true}
 export function acceptJob(s:GameState,id:JobId):boolean{
  const def=localJobs.find(q=>q.id===id)!;if(s.jobs[id].status!=='new'||s.venue!==def.venue||s.story!==6)return false;

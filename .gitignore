@@ -6,3 +6,5 @@ test-results/
 .playwright-browsers/
 
 artifacts/
+preview-dist/
+pages-preview/

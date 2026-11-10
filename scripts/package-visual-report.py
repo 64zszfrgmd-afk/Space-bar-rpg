@@ -10,12 +10,20 @@ for r in report['reports']:
     assert len(r['rooms'])==9 and len(r['npcs'])==23 and len(r['heroes'])==5
     assert not r['errors'] and r['loadFailureRollback']
     for n in r['npcs']: assert n['arrivalPixels']>=8 and n['modelPixels']>100 and n['dialogue']
+journey=json.loads((root/'test-results/user-journey/results.json').read_text())
+assert {(r['engine'],r['profile']) for r in journey['reports']}=={(e,p) for e in ['chromium','webkit'] for p in ['fresh','r2','v021']}
+for r in journey['reports']:
+    assert len(r['journeys'])==9 and r['persisted'] and r['productionOnly'] and not r['errors']
+    if r['profile']=='fresh': assert len({d['id'] for d in r['dialogs']})==23
 version=json.loads((root/'package.json').read_text())['version']
 archive=root/f'artifacts/spacebar-rpg-{version}-visual-report.zip'
 archive.parent.mkdir(exist_ok=True)
 with ZipFile(archive,'w',ZIP_DEFLATED) as z:
     for p in sorted(folder.rglob('*')):
         if p.is_file():z.write(p,'world-visual/'+p.relative_to(folder).as_posix())
+    for p in sorted((root/'test-results/user-journey').rglob('*')):
+        if p.is_file():z.write(p,'user-journey/'+p.name)
+    z.write(root/'docs/TOUCH-TRAVEL-0211.md','TOUCH-TRAVEL-0211.md')
     for p in sorted((root/'docs/visual-v021').glob('*')):
         if p.is_file():z.write(p,'baseline-0.20/'+p.name)
     z.write(root/'docs/WORLD-FIXES-021.md','WORLD-FIXES-021.md')

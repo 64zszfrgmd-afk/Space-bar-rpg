@@ -7,16 +7,17 @@ export const pagesBase = '/Space-bar-rpg/';
 export const dist = fileURLToPath(new URL('../dist/', import.meta.url));
 
 // Strict static hosting: no Vite history fallback masking a missing JS/CSS asset.
-export async function servePages() {
+export async function servePages(options={}) {
+  const folder=resolve(options.folder??dist),base=options.base??pagesBase;
   const server = createServer(async (request, response) => {
     try {
       const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
-      if (pathname === pagesBase.slice(0, -1)) {
-        response.writeHead(308, {location: pagesBase});response.end();return;
+      if (pathname === base.slice(0, -1)) {
+        response.writeHead(308, {location: base});response.end();return;
       }
-      if (!pathname.startsWith(pagesBase)) {response.writeHead(404);response.end();return}
-      const file = resolve(dist, pathname.slice(pagesBase.length) || 'index.html');
-      if (!file.startsWith(resolve(dist) + sep)) {response.writeHead(403);response.end();return}
+      if (!pathname.startsWith(base)) {response.writeHead(404);response.end();return}
+      const file = resolve(folder, pathname.slice(base.length) || 'index.html');
+      if (!file.startsWith(folder + sep)) {response.writeHead(403);response.end();return}
       if (!(await stat(file)).isFile()) {response.writeHead(404);response.end();return}
       const mime = file.endsWith('.js') ? 'application/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.html') ? 'text/html' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream';
       response.writeHead(200, {'content-type': mime + '; charset=utf-8', 'cache-control': 'no-store'});
