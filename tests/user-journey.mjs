@@ -3,6 +3,7 @@ import {existsSync} from 'node:fs';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {servePages,pagesBase} from './pages-server.mjs';
+import {checkJoystickMovement} from './joystick.mjs';
 const out=new URL('../test-results/user-journey/',import.meta.url);await mkdir(out,{recursive:true});
 const host=await servePages(),reports=[];
 const locations=['nebula','meridian','rust','comet','plankton','abyss','orbit','echo','cabin'];
@@ -33,11 +34,8 @@ try{
      await menu('map');await tap('[data-action="travel-'+id+'"]');await p.waitForFunction(id=>{const s=window.spaceBar.getSnapshot();return s.world.renderedLocation===id&&!s.paused&&s.flow.flow.code==='CONTROLS_READY'},id,{timeout:20000});assert.equal((await snap()).state.venue,id);assert.equal((await snap()).state.credits,credits);
      const stages=(await snap()).flow.flow.events.map(e=>e.code);for(const stage of ['REQUESTED','PASS_CHECKED','BUILDING','FRAME_PRESENTED','STATE_COMMITTED','CONTROLS_READY'])assert.ok(stages.includes(stage),id+' '+stage);
      // Genuine touchscreen joystick movement, not keyboard or a scene-position test hook.
-     const before=(await snap()).player,r=await p.locator('#joystick').boundingBox();
-     if(engineName==='chromium'){const cdp=await p.context().newCDPSession(p);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+r.width/2+30,y:r.y+r.height/2,id:1}]});await p.waitForTimeout(350);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach()}
-     else{await p.touchscreen.tap(r.x+r.width/2+30,r.y+r.height/2);await p.mouse.move(r.x+r.width/2+30,r.y+r.height/2);await p.mouse.down();await p.waitForTimeout(350);await p.mouse.up()}
-     const after=(await snap()).player;assert.ok(Math.hypot(after.x-before.x,after.z-before.z)>.15,id+' working movement after touch travel');
-     journeys.push({id,rendered:(await snap()).world.renderedLocation,controlsReady:true});console.log(engineName+' '+profile+': '+id+' rendered and controlled');
+     const movement=await checkJoystickMovement(p,engineName,id);
+     journeys.push({id,rendered:(await snap()).world.renderedLocation,controlsReady:true,movement});console.log(engineName+' '+profile+': '+id+' rendered and controlled');
      if(profile==='fresh')for(const npc of residents[id]){await approach(npc);await close()}
      await p.screenshot({path:new URL(engineName+'-'+profile+'-'+id+'.png',out).pathname});
     }

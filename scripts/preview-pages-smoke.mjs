@@ -4,6 +4,7 @@ import {existsSync} from 'node:fs';
 import {mkdir,readFile,stat,writeFile} from 'node:fs/promises';
 import {resolve,sep} from 'node:path';
 import {chromium,webkit} from 'playwright';
+import {checkJoystickMovement} from '../tests/joystick.mjs';
 
 const base='/Space-bar-rpg/',testBase=base+'test/0.21.2/',saveKey='spacebar-restored-v020',prefix='spacebar-test-0212:';
 const output=resolve('test-results/pages-preview',process.env.SPACEBAR_LIVE_URL?'https':'staged');
@@ -80,15 +81,12 @@ try{
     }
    },{key:prefix+saveKey,value:fixture});
    await page.reload();await ready();assert.equal((await snap()).state.story,6);assert.equal((await snap()).state.credits,321);
-   const routes=[];
+   const routes=[],movement=[];
    for(const id of ['nebula','meridian','rust','comet','plankton','abyss','orbit','echo','cabin']){
     await menu('map');await tap('[data-action="travel-'+id+'"]');
     await page.waitForFunction(id=>{const s=window.spaceBar.getSnapshot();return s.world.renderedLocation===id&&!s.paused&&s.flow.flow.code==='CONTROLS_READY'},id,{timeout:20000});
     assert.equal((await snap()).state.venue,id);
-    const before=(await snap()).player,r=await page.locator('#joystick').boundingBox();
-    if(name==='chromium'){const cdp=await page.context().newCDPSession(page);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+r.width/2+30,y:r.y+r.height/2,id:1}]});await page.waitForTimeout(350);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach()}
-    else{await page.touchscreen.tap(r.x+r.width/2+30,r.y+r.height/2);await page.mouse.move(r.x+r.width/2+30,r.y+r.height/2);await page.mouse.down();await page.waitForTimeout(350);await page.mouse.up()}
-    const after=(await snap()).player;assert.ok(Math.hypot(after.x-before.x,after.z-before.z)>.15,id+' controls');
+    movement.push(await checkJoystickMovement(page,name,id));
     if(id==='rust')dialogs.push(await approach('rusk'));
     await page.screenshot({path:resolve(output,name+'-'+id+'.png')});routes.push(id);
    }
@@ -99,7 +97,7 @@ try{
    assert.ok(await page.evaluate(key=>localStorage.getItem(key),prefix+saveKey));
    await page.reload();await ready();assert.equal((await snap()).state.venue,'cabin');assert.equal((await snap()).state.credits,321);
    assert.equal(await page.evaluate(key=>localStorage.getItem(key),saveKey),original);assert.deepEqual(errors,[]);
-   reports.push({engine:name,url,version:'0.21.2',provenance,routes,dialogs,productionSaveUntouched:true,persisted:true,errors});
+   reports.push({engine:name,url,version:'0.21.2',provenance,routes,movement,dialogs,productionSaveUntouched:true,persisted:true,errors});
    console.log('PASS '+name+': '+url+'; real UI, 9 scenes and controls, dialogs, isolated save, reload');
   }finally{await browser.close()}
  }
