@@ -1,6 +1,6 @@
 """Keep the complete deployed 0.21.0 artifact and add an isolated 0.21.1 path."""
 from pathlib import Path
-import argparse, hashlib, io, json, shutil, subprocess, tarfile, time, urllib.request
+import argparse, hashlib, io, json, os, shutil, subprocess, tarfile, time, urllib.request
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = json.loads((ROOT / 'hosting/production-0.21.0.json').read_text())
@@ -19,6 +19,18 @@ def check_production():
     for name, expected in MANIFEST['files'].items():
         assert digest(read_url(MANIFEST['url'] + name)) == expected, 'Published production changed: ' + name
     print('Production unchanged: all six deployed file hashes match 0.21.0')
+
+def guard_main():
+    headers = {'Accept': 'application/vnd.github+json'}
+    token = os.environ.get('GH_TOKEN')
+    if token:
+        headers['Authorization'] = 'Bearer ' + token
+    request = urllib.request.Request(
+        'https://api.github.com/repos/64zszfrgmd-afk/Space-bar-rpg/git/ref/heads/main',
+        headers=headers)
+    with urllib.request.urlopen(request, timeout=25) as response:
+        assert json.load(response)['object']['sha'] == MANIFEST['mainCommit'], 'main changed; preserve its new deployed artifact first'
+    check_production()
 
 def assemble():
     archive = (ROOT / 'hosting/production-0.21.0.tar.gz').read_bytes()
@@ -76,7 +88,7 @@ def verify_published():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', choices=['check-production', 'assemble', 'verify-published'])
+    parser.add_argument('action', choices=['check-production', 'guard-main', 'assemble', 'verify-published'])
     action = parser.parse_args().action
-    {'check-production': check_production, 'assemble': assemble,
+    {'check-production': check_production, 'guard-main': guard_main, 'assemble': assemble,
      'verify-published': verify_published}[action]()

@@ -46,6 +46,8 @@ jobs:
   site_preview:
     if: github.event_name == 'workflow_dispatch' && inputs.publish_site_preview && github.ref == 'refs/heads/feature/v0.21-world-fixes'
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
     timeout-minutes: 20
     environment:
       name: github-pages-test
@@ -59,6 +61,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -71,17 +76,11 @@ jobs:
         run: npx vite build --base=/Space-bar-rpg/test/0.21.1/ --outDir=preview-dist
       - run: python3 scripts/prepare-pages-preview.py check-production
       - run: python3 scripts/prepare-pages-preview.py assemble
-      - run: npx playwright install --with-deps chromium webkit
       - run: node scripts/preview-pages-smoke.mjs
       - name: Refuse to overwrite a newer production deployment
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          production_sha=$(gh api repos/64zszfrgmd-afk/Space-bar-rpg/git/ref/heads/main --jq .object.sha)
-          preserved_sha=$(node -p "JSON.parse(require('fs').readFileSync('hosting/production-0.21.0.json','utf8')).mainCommit")
-          test "$production_sha" = "$preserved_sha"
-          python3 scripts/prepare-pages-preview.py check-production
+        run: python3 scripts/prepare-pages-preview.py guard-main
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
