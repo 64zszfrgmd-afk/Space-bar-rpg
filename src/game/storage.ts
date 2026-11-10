@@ -3,7 +3,8 @@ import type {GameState, Relation, QuestStatus} from './types';
 import {repairTravelAccess} from './access';
 import {legacyNames} from './content';
 
-export const SAVE_KEY = 'spacebar-restored-v020';
+const savePrefix=import.meta.env.VITE_SAVE_PREFIX||'';
+export const SAVE_KEY = savePrefix+'spacebar-restored-v020';
 export interface StoragePort {getItem(key:string):string|null;setItem(key:string,value:string):void}
 export const freshState = (): GameState => ({schema:2,version:VERSION,revision:CONTENT_REVISION,hero:{name:"Путешественник",species:"human",color:"#f2c19e",accessory:"none",dance:0},settings:{quality:"auto",volume:.7},venue:"nebula",visited:["nebula"],story:0,travelUnlocked:false,reputation:0,inventory:[],npcMoods:Object.fromEntries(NPC_IDS.map(id=>[id,50])),jobs:Object.fromEntries(JOB_IDS.map(id=>[id,{status:"new",progress:0}])) as GameState["jobs"],rhythm:{best:0,day:-1,paid:0},credits:120,energy:100,mood:65,buzz:0,met:[],relations:{},quests:{party:'new',syrup:'new'},partyDance:0,syrupStage:0,worldTime:0,decisions:[]});
 const number = (value:unknown,fallback:number,min=0,max=100) => typeof value==='number'&&Number.isFinite(value)?Math.max(min,Math.min(max,value)):fallback;
@@ -48,12 +49,12 @@ export function normalizeState(raw:unknown): GameState|null {
   const rhythm=v.rhythm as Record<string,unknown>|undefined;if(rhythm&&typeof rhythm==='object')state.rhythm={best:Math.floor(number(rhythm.best,0,0,800)),day:Math.floor(number(rhythm.day,-1,-1,1e9)),paid:Math.floor(number(rhythm.paid,0,0,3))};
   return state;
 }
-export const BACKUP_KEY='spacebar-restored-v020-backup-before-0211';
+export const BACKUP_KEY=savePrefix+'spacebar-restored-v020-backup-before-0211';
 let loadInfo={source:'fresh',version:'none',backup:false,repairs:[] as string[]};
 export const getLoadInfo=()=>({...loadInfo,repairs:[...loadInfo.repairs]});
 export function loadGame(storage:Pick<StoragePort,'getItem'>&Partial<Pick<StoragePort,'setItem'>>):GameState {
  loadInfo={source:'fresh',version:'none',backup:false,repairs:[]};
- for(const key of [SAVE_KEY,'spacebar-v1']){
+ for(const key of [SAVE_KEY,savePrefix+'spacebar-v1']){
   try{const text=storage.getItem(key),raw=JSON.parse(text||'null'),state=normalizeState(raw);if(state){
    loadInfo.source=key;loadInfo.version=String(raw.version??'0.1.0');
    if(raw.story!==state.story||raw.travelUnlocked!==state.travelUnlocked||JSON.stringify(raw.inventory??[])!==JSON.stringify(state.inventory))loadInfo.repairs.push('Согласованы сохранённый пропуск, доки и история путешествий.');
