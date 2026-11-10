@@ -35,3 +35,4 @@ button{min-height:44px}
 /* Definite flex height avoids clipped, non-scrollable choice lists in mobile Safari. */
 .modal{height:85vh;height:min(760px,calc(100dvh - 72px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))}.modal-body{flex:1}
 @media(max-height:500px){#interact{top:108px;bottom:auto;max-width:calc(100vw - 160px);white-space:nowrap;padding:8px;font-size:11px}}
+.hero-preview{display:block;width:100%;height:clamp(150px,25vh,230px);object-fit:contain;background:#19152d;border:1px solid #655885;border-radius:18px;margin:10px 0 14px}

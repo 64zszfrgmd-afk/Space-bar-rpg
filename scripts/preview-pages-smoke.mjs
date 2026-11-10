@@ -5,7 +5,7 @@ import {mkdir,readFile,stat,writeFile} from 'node:fs/promises';
 import {resolve,sep} from 'node:path';
 import {chromium,webkit} from 'playwright';
 
-const base='/Space-bar-rpg/',testBase=base+'test/0.21.1/',saveKey='spacebar-restored-v020',prefix='spacebar-test-0211:';
+const base='/Space-bar-rpg/',testBase=base+'test/0.21.2/',saveKey='spacebar-restored-v020',prefix='spacebar-test-0212:';
 const output=resolve('test-results/pages-preview',process.env.SPACEBAR_LIVE_URL?'https':'staged');
 await mkdir(output,{recursive:true});
 let server;
@@ -41,7 +41,7 @@ try{
   assert.match(response.headers.get('content-type'),path.endsWith('.js')?/javascript/:/text\/css/);
  }
  const provenance=await (await fetch(new URL('preview-build.json',url))).json();
- assert.equal(provenance.version,'0.21.1');assert.equal(provenance.savePrefix,prefix);
+ assert.equal(provenance.version,'0.21.2');assert.equal(provenance.savePrefix,prefix);
  assert.equal((await (await fetch(new URL(base+'version.json',url))).json()).version,'0.21.0');
  for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
   if(!(process.env.SPACEBAR_BROWSERS||'chromium,webkit').split(',').includes(name))continue;
@@ -55,7 +55,7 @@ try{
    await page.goto(url);
    const ready=()=>page.locator('#startup[hidden]').waitFor({state:'attached',timeout:30000});
    const snap=()=>page.evaluate(()=>window.spaceBar.getSnapshot());
-   await ready();assert.equal((await snap()).version,'0.21.1');assert.equal((await snap()).state.credits,120);
+   await ready();assert.equal((await snap()).version,'0.21.2');assert.equal((await snap()).state.credits,120);
    assert.equal((await snap()).state.story,0);assert.equal((await snap()).world.renderedLocation,'nebula');
    const tap=async(selector)=>{
     const target=page.locator(selector);await target.scrollIntoViewIfNeeded();
@@ -99,7 +99,7 @@ try{
    assert.ok(await page.evaluate(key=>localStorage.getItem(key),prefix+saveKey));
    await page.reload();await ready();assert.equal((await snap()).state.venue,'cabin');assert.equal((await snap()).state.credits,321);
    assert.equal(await page.evaluate(key=>localStorage.getItem(key),saveKey),original);assert.deepEqual(errors,[]);
-   reports.push({engine:name,url,version:'0.21.1',provenance,routes,dialogs,productionSaveUntouched:true,persisted:true,errors});
+   reports.push({engine:name,url,version:'0.21.2',provenance,routes,dialogs,productionSaveUntouched:true,persisted:true,errors});
    console.log('PASS '+name+': '+url+'; real UI, 9 scenes and controls, dialogs, isolated save, reload');
   }finally{await browser.close()}
  }

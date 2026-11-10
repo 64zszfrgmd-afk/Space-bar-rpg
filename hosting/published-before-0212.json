@@ -1,0 +1,24 @@
+{
+  "version": "0.21.1",
+  "mainCommit": "ffa62be7404559a51157a86efbc3785b7dece82a",
+  "runId": 42843579377,
+  "artifactId": 13776659911,
+  "archiveFile": "published-before-0212.tar.gz",
+  "url": "https://64zszfrgmd-afk.github.io/Space-bar-rpg/",
+  "archiveSha256": "0ae933d9f0f64f55c1290893b356bf776869027803cee326c5b244f977849aba",
+  "files": {
+    "index.html": "19c8bbd19c80053396ccb5c37160f46a33590e7b40a98433d076dd080a20eae8",
+    "test/0.21.1/index.html": "7b2d4a3c000ea6876d1007bc804c2d834a2abd72faa5f8161a6cf97f9b657c25",
+    "test/0.21.1/preview-build.json": "a5f46e3aa3f6fb1261bfd3ed551df7300ab20c4cc0e1d7a9666a8d2538547bb0",
+    "test/0.21.1/assets/index-BAnQqJIQ.css": "b4223ab2aa2d6a4f488d2154999b4c0fe322e3b5bf2c92352575a025c10c7573",
+    "test/0.21.1/assets/three-DnB9fIks.js": "e2560700dd4ea737596d88d6bece3192caa9b3bd73d67f4252f48153a30ff197",
+    "test/0.21.1/assets/index-By4D8_T3.js": "575578605ab939efbc02c08e60a61721721a35a2c7f0c8f97f5d80709f4baaec",
+    "test/0.21.1/THIRD-PARTY-NOTICES.txt": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
+    "test/0.21.1/version.json": "af6aa9a242067fd4d7b985c57adc6bbf7c350afa33e47ba1fb2d855060220e01",
+    "assets/index-C4wiFE6t.js": "5723239076f9f1ea63b1c4d398a0cceafe67601d548e07ee82416b0fa190b319",
+    "assets/index-CsZ4JZXV.css": "6ee3ed7366db9e94cb4c6281aa24dae2a107c81803f964ce7a703224ea178c33",
+    "assets/three-B-EU1qQF.js": "fb0b407a634a514fb6910345fb8125156bc9867adff3b12f770edbf5e0191593",
+    "THIRD-PARTY-NOTICES.txt": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
+    "version.json": "02b0eaa5d019f12e063aff4122d9e34056b3c25e97cb77fedd1a85972f915517"
+  }
+}

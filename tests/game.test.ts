@@ -11,7 +11,7 @@ describe('save migration and browser failures',()=>{
   it('migrates money/stats and previous display-name acquaintances without writing old keys',()=>{
     const data=new Map([['spacebar-v1',JSON.stringify({credits:72,mood:81,buzz:37,met:['Зора · навигатор','Квик · ботаник']})],['spacebar-save-v2','original older world']]);
     const storage={getItem:(k:string)=>data.get(k)??null,setItem:(k:string,v:string)=>{data.set(k,v)}};
-    const before=[...data],state=loadGame(storage);expect(state).toMatchObject({version:'0.21.1',credits:72,energy:100,mood:81,buzz:37,met:['zora','quik']});
+    const before=[...data],state=loadGame(storage);expect(state).toMatchObject({version:'0.21.2',credits:72,energy:100,mood:81,buzz:37,met:['zora','quik']});
     expect(saveGame(storage,state)).toBe(true);expect([...data].slice(0,2)).toEqual(before);expect(JSON.parse(data.get(SAVE_KEY)!)).toEqual(state);
   });
   it('prefers the new save, survives corruption, and accepts disabled storage',()=>{

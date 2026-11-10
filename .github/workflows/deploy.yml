@@ -12,7 +12,7 @@ on:
         default: false
         required: false
       publish_site_preview:
-        description: Publish isolated /test/0.21.1/ while retaining every production file
+        description: Publish /test/0.21.2/ while retaining both existing versions
         type: boolean
         default: false
         required: false
@@ -22,16 +22,19 @@ jobs:
   build:
     if: github.event_name != 'workflow_dispatch' || !inputs.publish_site_preview
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+      - name: Trust this checkout inside the browser container
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
       - name: Save browser diagnostics
         if: always()
@@ -44,14 +47,14 @@ jobs:
         with:
           path: dist
   site_preview:
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_site_preview && github.ref == 'refs/heads/feature/v0.21-world-fixes'
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_site_preview && github.ref == 'refs/heads/feature/v0.21.2-hero-appearance'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
-    timeout-minutes: 20
+    timeout-minutes: 35
     environment:
       name: github-pages-test
-      url: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.1/
+      url: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.2/
     concurrency:
       group: github-pages-production
       cancel-in-progress: false
@@ -71,11 +74,18 @@ jobs:
       - run: npm test
       - name: Build isolated test path and storage namespace
         env:
-          VITE_SAVE_PREFIX: 'spacebar-test-0211:'
-        run: npx vite build --base=/Space-bar-rpg/test/0.21.1/ --outDir=preview-dist
+          VITE_SAVE_PREFIX: 'spacebar-test-0212:'
+        run: npx vite build --base=/Space-bar-rpg/test/0.21.2/ --outDir=preview-dist
       - run: node scripts/prepare-pages-preview.mjs check-production
       - run: node scripts/prepare-pages-preview.mjs assemble
       - run: node scripts/preview-pages-smoke.mjs
+      - name: Test all five avatars through the mobile editor
+        env:
+          SPACEBAR_HERO_FOLDER: pages-preview/test/0.21.2
+          SPACEBAR_HERO_BASE: /Space-bar-rpg/test/0.21.2/
+          SPACEBAR_HERO_SAVE_PREFIX: 'spacebar-test-0212:'
+        run: node tests/hero-appearance.mjs
+      - run: node scripts/prepare-pages-preview.mjs publish-report
       - name: Refuse to overwrite a newer production deployment
         env:
           GH_TOKEN: ${{ github.token }}
@@ -83,24 +93,31 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages-test-0211
+          name: github-pages-test-0212
           path: pages-preview
       - name: Publish the preserved site with its new test subdirectory
         id: publish
         uses: actions/deploy-pages@v4
         with:
-          artifact_name: github-pages-test-0211
+          artifact_name: github-pages-test-0212
       - run: node scripts/prepare-pages-preview.mjs verify-published
       - name: Test the published HTTPS address in Chromium and WebKit
         env:
-          SPACEBAR_LIVE_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.1/
+          SPACEBAR_LIVE_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.2/
         run: node scripts/preview-pages-smoke.mjs
+      - name: Test avatar changes on the published HTTPS site
+        env:
+          SPACEBAR_HERO_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.2/
+          SPACEBAR_HERO_SAVE_PREFIX: 'spacebar-test-0212:'
+        run: node tests/hero-appearance.mjs
       - name: Save staged and live browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pages-preview-0211-evidence
-          path: test-results/pages-preview/
+          name: pages-preview-0212-evidence
+          path: |
+            test-results/pages-preview/
+            test-results/hero-appearance/
           retention-days: 14
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

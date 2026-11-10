@@ -7,8 +7,8 @@ import {resolve,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const manifest=JSON.parse(await readFile(resolve(root,'hosting/production-0.21.0.json'),'utf8'));
-const previewPath='test/0.21.1/',prefix='spacebar-test-0211:';
+const manifest=JSON.parse(await readFile(resolve(root,'hosting/published-before-0212.json'),'utf8'));
+const version='0.21.2',previewPath='test/'+version+'/',prefix='spacebar-test-0212:';
 const digest=data=>createHash('sha256').update(data).digest('hex');
 async function readURL(url,options){
  const response=await fetch(url,{...options,signal:AbortSignal.timeout(25000)});
@@ -16,7 +16,7 @@ async function readURL(url,options){
 }
 async function checkProduction(){
  for(const [name,hash] of Object.entries(manifest.files))assert.equal(digest(await readURL(manifest.url+name)),hash,'Published production changed: '+name);
- console.log('Production unchanged: all six deployed file hashes match 0.21.0');
+ console.log('Existing 0.21.0 and 0.21.1 preserved: all '+Object.keys(manifest.files).length+' published file hashes match');
 }
 async function guardMain(){
  const headers={Accept:'application/vnd.github+json'};
@@ -37,7 +37,7 @@ async function fileHashes(folder){
  await walk(folder);return result;
 }
 async function assemble(){
- const archive=resolve(root,'hosting/production-0.21.0.tar.gz'),site=resolve(root,'pages-preview');
+ const archive=resolve(root,'hosting',manifest.archiveFile),site=resolve(root,'pages-preview');
  assert.equal(digest(await readFile(archive)),manifest.archiveSha256);
  assert.ok(!existsSync(site),'Use a fresh staging directory; existing files are never removed');
  // The archived tar was checked against the live site before it was committed.
@@ -50,15 +50,25 @@ async function assemble(){
  execFileSync('tar',['-xzf',archive,'--no-same-owner','--no-same-permissions','--directory',site]);
  const original=await fileHashes(site);assert.deepEqual(original,manifest.files);
  const preview=resolve(root,'preview-dist');
- assert.equal(JSON.parse(await readFile(resolve(preview,'version.json'),'utf8')).version,'0.21.1');
+ assert.equal(JSON.parse(await readFile(resolve(preview,'version.json'),'utf8')).version,version);
  const target=resolve(site,previewPath);await mkdir(resolve(site,'test'),{recursive:true});
  await cp(preview,target,{recursive:true,errorOnExist:true,force:false});
  const commit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
- const metadata={version:'0.21.1',sourceCommit:commit,sourceBranch:'feature/v0.21-world-fixes',
-  base:'/Space-bar-rpg/'+previewPath,savePrefix:prefix,productionCommit:manifest.mainCommit};
+ // Copy the old test save once. The old namespace and the main game stay untouched.
+ // No save schema or in-game storage implementation is changed.
+ const bootstrap="try{const target='spacebar-test-0212:spacebar-restored-v020';if(localStorage.getItem(target)===null){const raw=localStorage.getItem('spacebar-test-0211:spacebar-restored-v020');if(raw){const value=JSON.parse(raw);if(typeof value.credits==='number'&&Number.isFinite(value.credits)&&value.credits>=0)localStorage.setItem(target,raw)}}}catch{}";
+ const index=resolve(target,'index.html'),html=await readFile(index,'utf8');assert.ok(html.includes('<head>'));
+ await writeFile(index,html.replace('<head>','<head><script>'+bootstrap+'</script>'));
+ const metadata={version,sourceCommit:commit,sourceBranch:'feature/v0.21.2-hero-appearance',
+  base:'/Space-bar-rpg/'+previewPath,savePrefix:prefix,copySaveFrom:'spacebar-test-0211:',productionCommit:manifest.mainCommit};
  await writeFile(resolve(target,'preview-build.json'),JSON.stringify(metadata,null,2)+'\n');
  for(const [name,hash] of Object.entries(manifest.files))assert.equal(digest(await readFile(resolve(site,name))),hash,name);
  console.log('Staged original production plus '+previewPath+' at '+commit);
+}
+async function publishReport(){
+ const target=resolve(root,'pages-preview',previewPath,'hero-report');
+ await cp(resolve(root,'test-results/hero-appearance/staged'),target,{recursive:true,errorOnExist:true,force:false});
+ console.log('WebKit and Chromium screenshots added to '+previewPath+'hero-report/');
 }
 async function verifyPublished(){
  await checkProduction();
@@ -73,6 +83,6 @@ async function verifyPublished(){
  await writeFile(resolve(output,'published-files.json'),JSON.stringify(files,null,2)+'\n');
  console.log('HTTPS publication verified: '+Object.keys(files).length+' exact files');
 }
-const actions={'check-production':checkProduction,'guard-main':guardMain,assemble,'verify-published':verifyPublished};
-assert.ok(Object.hasOwn(actions,process.argv[2]),'Expected check-production, guard-main, assemble or verify-published');
+const actions={'check-production':checkProduction,'guard-main':guardMain,assemble,'publish-report':publishReport,'verify-published':verifyPublished};
+assert.ok(Object.hasOwn(actions,process.argv[2]),'Expected check-production, guard-main, assemble, publish-report or verify-published');
 await actions[process.argv[2]]();

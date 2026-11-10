@@ -8,7 +8,8 @@ import {acceptJob,claimJob,deliverJob,canTravel,addJobProgress} from '../game/wo
 import {socialOffer} from '../game/profile';
 import {meet} from '../game/social';
 import type {GameState,VenueId,Quality} from '../game/types';
-interface Hooks {state:()=>GameState;dialog:Dialog;close:()=>void;menu:()=>void;talk:(n:NpcDefinition)=>void;changed:(message:string)=>void;go:(id:VenueId)=>boolean;approach:(id:NpcDefinition['id'])=>void;hero:()=>void;quality:()=>void;rhythm:()=>void;onFloor:()=>boolean}
+import type {HeroProfile} from '../world/hero';
+interface Hooks {state:()=>GameState;dialog:Dialog;close:()=>void;menu:()=>void;talk:(n:NpcDefinition)=>void;changed:(message:string)=>void;go:(id:VenueId)=>boolean;approach:(id:NpcDefinition['id'])=>void;hero:(patch:Partial<HeroProfile>)=>boolean;heroPreview:()=>HTMLCanvasElement;quality:()=>void;rhythm:()=>void;onFloor:()=>boolean}
 export class HistoryUI {
  constructor(private h:Hooks){}
  private back(){this.h.dialog.choice('Назад в меню',this.h.menu,false,'menu-back')}
@@ -45,11 +46,13 @@ export class HistoryUI {
  }
  private status(value:string){return ({new:'не взято',active:'в процессе',ready:'вернись за наградой',done:'✓ выполнено'} as Record<string,string>)[value]}
  appearance(){const d=this.h.dialog,s=this.h.state();d.show('Твой герой',`${s.hero.name} · ${species.find(x=>x.id===s.hero.species)!.name}. Вид меняет 3D-модель; прогресс остаётся общим.`);
-  for(const sp of species)d.choice(`${s.hero.species===sp.id?'✓ ':''}${sp.name}\n${sp.description}`,()=>{s.hero.species=sp.id;this.h.hero();this.h.changed('Внешность изменена: '+sp.name);this.appearance()},false,'species-'+sp.id);
+  const preview=this.h.heroPreview();preview.setAttribute('aria-label','Внешность героя: '+species.find(x=>x.id===s.hero.species)!.name);d.element(preview);
+  for(const sp of species)d.choice(`${s.hero.species===sp.id?'✓ ':''}${sp.name}\n${sp.description}`,()=>{if(this.h.hero({species:sp.id})){this.h.changed('Внешность изменена: '+sp.name);this.appearance()}else d.notice('Модель не обновилась. Прежний вид и прогресс сохранены.')},false,'species-'+sp.id);
   for(const [i,title] of ['Орбитальный шаг','Лунный шаффл','Волна щупалец'].entries())d.choice((s.hero.dance===i?'✓ ':'')+title,()=>{s.hero.dance=i as 0|1|2;this.h.changed('Танцевальное движение сохранено.');this.appearance()},false,'dance-style-'+i);
   const name=d.field('Имя путешественника',s.hero.name),color=d.field('Цвет',s.hero.color,'color');
-  d.choice('Сохранить имя и цвет',()=>{s.hero.name=name.value.trim().slice(0,24)||'Путешественник';s.hero.color=/^#[0-9a-f]{6}$/i.test(color.value)?color.value:s.hero.color;this.h.hero();this.h.changed('Герой сохранён.');this.appearance()},false,'hero-save');
-  for(const [id,title] of [['none','Без аксессуара'],['halo','Орбитальный нимб'],['hat','Космическая шляпа']] as const)d.choice(title,()=>{s.hero.accessory=id;this.h.hero();this.h.changed('Аксессуар изменён.');this.appearance()},false,'accessory-'+id);this.back();
+  d.choice('Сохранить имя и цвет',()=>{if(this.h.hero({name:name.value.trim().slice(0,24)||'Путешественник',color:/^#[0-9a-f]{6}$/i.test(color.value)?color.value:s.hero.color})){this.h.changed('Герой сохранён.');this.appearance()}else d.notice('Не удалось обновить модель. Прежняя внешность сохранена.')},false,'hero-save');
+  for(const [id,title] of [['none','Без аксессуара'],['halo','Орбитальный нимб'],['hat','Космическая шляпа']] as const)d.choice(title,()=>{if(this.h.hero({accessory:id})){this.h.changed('Аксессуар изменён.');this.appearance()}else d.notice('Не удалось обновить модель. Прежняя внешность сохранена.')},false,'accessory-'+id);this.back();
+  preview.scrollIntoView({block:'nearest'});
  }
  settings(){const d=this.h.dialog,s=this.h.state();d.show('Настройки','Качество меняет разрешение 3D. Музыка включается отдельной кнопкой после нажатия.');
   for(const [id,title] of [['auto','Автоматически'],['low','Экономное'],['balanced','Среднее'],['high','Высокое']] as [Quality,string][])d.choice(`${s.settings.quality===id?'✓ ':''}${title}`,()=>{s.settings.quality=id;this.h.quality();this.h.changed('Настройка графики сохранена.');this.settings()},false,'quality-'+id);

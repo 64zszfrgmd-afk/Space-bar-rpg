@@ -46,7 +46,7 @@ test('build identity is available as JSON at the Pages project path', async () =
   const metadata = JSON.parse(await readFile(join(dist, 'version.json'), 'utf8'));
   const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(metadata.version, pkg.version);
-  assert.equal(metadata.revision, 'touch-flow-1');
+  assert.equal(metadata.revision, 'hero-appearance-1');
   const host = await servePages();
   try {
     const response = await fetch(host.origin + pagesBase + 'version.json');
