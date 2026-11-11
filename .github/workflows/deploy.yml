@@ -50,11 +50,11 @@ jobs:
           path: test-results/
           if-no-files-found: ignore
       - uses: actions/upload-pages-artifact@v3
-        if: matrix.browser == 'chromium'
+        if: github.ref == 'refs/heads/main' && matrix.browser == 'chromium'
         with:
           path: dist
   site_preview:
-    if: github.ref == 'refs/heads/feature/v0.21.3-avatar-fixes' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_site_preview))
+    if: github.ref == 'refs/heads/feature/v0.21.3-avatar-fixes' && ((github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'CI-only:')) || (github.event_name == 'workflow_dispatch' && inputs.publish_site_preview))
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
