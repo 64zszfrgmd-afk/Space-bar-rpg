@@ -123,7 +123,15 @@ try{
    await tap('[data-action="species-orbion"]');assert.equal((await snap()).avatar.renderedSpecies,'orbion');await close();
    for(const viewport of [{width:320,height:568},{width:568,height:320}]){
     await page.setViewportSize(viewport);await menu('appearance');await tap('[data-action="species-ribbon"]');await preview('ribbon',45);
-    await shot('layout-'+viewport.width+'x'+viewport.height);await close();
+    await shot('layout-'+viewport.width+'x'+viewport.height);
+    if(viewport.height<500){
+     await page.evaluate(()=>{const p=WebGL2RenderingContext.prototype,native=p.drawElements;p.drawElements=function(...args){if(this.getParameter(this.FRAMEBUFFER_BINDING)!==null){p.drawElements=native;throw Error('Landscape preview failure')}return native.apply(this,args)}});
+     await tap('[data-action="species-orbion"]');
+     const notice=await page.locator('[data-notice]').evaluate(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e),b=e.closest('.modal-body').getBoundingClientRect();return {width:r.width,height:r.height,clip:s.clipPath,visible:r.top>=b.top-1&&r.bottom<=b.bottom+1}});
+     assert.ok(notice.width>100&&notice.height>40&&notice.clip==='none'&&notice.visible,'landscape error remains readable');
+     await shot('landscape-error');await tap('[data-action="species-orbion"]');assert.equal((await snap()).avatar.avatarBuildStatus,'ready');
+    }
+    await close();
    }
    if(prefix){
     assert.equal(await page.evaluate(()=>localStorage.getItem('spacebar-test-0212:spacebar-restored-v020')),legacy);
