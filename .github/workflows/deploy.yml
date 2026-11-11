@@ -1,7 +1,7 @@
 name: Test and deploy GitHub Pages
 on:
   push:
-    branches: [main]
+    branches: [main, feature/v0.21.3-avatar-fixes]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
         default: false
         required: false
       publish_site_preview:
-        description: Publish /test/0.21.2/ while retaining both existing versions
+        description: Publish /test/0.21.3/ while retaining all three existing versions
         type: boolean
         default: false
         required: false
@@ -20,7 +20,11 @@ permissions:
   contents: read
 jobs:
   build:
-    if: github.event_name != 'workflow_dispatch' || !inputs.publish_site_preview
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    if: (github.event_name != 'workflow_dispatch' || !inputs.publish_site_preview) && (github.event_name != 'pull_request' || github.head_ref != 'feature/v0.21.3-avatar-fixes')
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
@@ -36,25 +40,28 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run test:browser
+        env:
+          SPACEBAR_BROWSERS: ${{ matrix.browser }}
       - name: Save browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-launch-tests
+          name: mobile-launch-tests-${{ matrix.browser }}
           path: test-results/
           if-no-files-found: ignore
       - uses: actions/upload-pages-artifact@v3
+        if: matrix.browser == 'chromium'
         with:
           path: dist
   site_preview:
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_site_preview && github.ref == 'refs/heads/feature/v0.21.2-hero-appearance'
+    if: github.ref == 'refs/heads/feature/v0.21.3-avatar-fixes' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_site_preview))
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
     timeout-minutes: 35
     environment:
       name: github-pages-test
-      url: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.2/
+      url: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.3/
     concurrency:
       group: github-pages-production
       cancel-in-progress: false
@@ -74,17 +81,17 @@ jobs:
       - run: npm test
       - name: Build isolated test path and storage namespace
         env:
-          VITE_SAVE_PREFIX: 'spacebar-test-0212:'
-        run: npx vite build --base=/Space-bar-rpg/test/0.21.2/ --outDir=preview-dist
+          VITE_SAVE_PREFIX: 'spacebar-test-0213:'
+        run: npx vite build --base=/Space-bar-rpg/test/0.21.3/ --outDir=preview-dist-0213
       - run: node scripts/prepare-pages-preview.mjs check-production
       - run: node scripts/prepare-pages-preview.mjs assemble
       - run: node scripts/preview-pages-smoke.mjs
       - name: Test all five avatars through the mobile editor
         env:
-          SPACEBAR_HERO_FOLDER: pages-preview/test/0.21.2
-          SPACEBAR_HERO_BASE: /Space-bar-rpg/test/0.21.2/
-          SPACEBAR_HERO_SAVE_PREFIX: 'spacebar-test-0212:'
-        run: node tests/hero-appearance.mjs
+          SPACEBAR_HERO_FOLDER: pages-preview-0213/test/0.21.3
+          SPACEBAR_HERO_BASE: /Space-bar-rpg/test/0.21.3/
+          SPACEBAR_HERO_SAVE_PREFIX: 'spacebar-test-0213:'
+        run: npm run test:hero
       - run: node scripts/prepare-pages-preview.mjs publish-report
       - name: Refuse to overwrite a newer production deployment
         env:
@@ -93,31 +100,32 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages-test-0212
-          path: pages-preview
+          name: github-pages-test-0213
+          path: pages-preview-0213
       - name: Publish the preserved site with its new test subdirectory
         id: publish
         uses: actions/deploy-pages@v4
         with:
-          artifact_name: github-pages-test-0212
+          artifact_name: github-pages-test-0213
       - run: node scripts/prepare-pages-preview.mjs verify-published
       - name: Test the published HTTPS address in Chromium and WebKit
         env:
-          SPACEBAR_LIVE_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.2/
+          SPACEBAR_LIVE_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.3/
         run: node scripts/preview-pages-smoke.mjs
       - name: Test avatar changes on the published HTTPS site
         env:
-          SPACEBAR_HERO_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.2/
-          SPACEBAR_HERO_SAVE_PREFIX: 'spacebar-test-0212:'
+          SPACEBAR_HERO_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.3/
+          SPACEBAR_HERO_SAVE_PREFIX: 'spacebar-test-0213:'
         run: node tests/hero-appearance.mjs
       - name: Save staged and live browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pages-preview-0212-evidence
+          name: pages-preview-0213-evidence
           path: |
             test-results/pages-preview/
             test-results/hero-appearance/
+            test-results/avatar-comparison/
           retention-days: 14
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

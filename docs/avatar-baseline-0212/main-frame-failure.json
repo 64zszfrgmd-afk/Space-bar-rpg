@@ -1,0 +1,80 @@
+{
+  "method": "injected on-screen draw failure armed during actual species click; not a physical iPhone reproduction",
+  "version": "0.21.2",
+  "species": "orbion",
+  "attached": {
+    "species": "orbion",
+    "signature": "43c2262f",
+    "meshes": 16,
+    "vertices": 2184,
+    "triangles": 3408,
+    "revision": 2,
+    "modelCount": 1,
+    "visible": true,
+    "eyeHeight": 1.6,
+    "pose": {
+      "leg-left": {
+        "position": [
+          -0.27,
+          0.9,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          "XYZ"
+        ]
+      },
+      "leg-right": {
+        "position": [
+          0.27,
+          0.9,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          "XYZ"
+        ]
+      },
+      "arm-left": {
+        "position": [
+          -0.56,
+          1.32,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          -0.12,
+          "XYZ"
+        ]
+      },
+      "arm-right": {
+        "position": [
+          0.56,
+          1.32,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0.12,
+          "XYZ"
+        ]
+      }
+    }
+  },
+  "saved": "orbion",
+  "toast": "Внешность изменена: Орбион",
+  "issues": [
+    {
+      "code": "FRAME_RENDER_FAILED",
+      "subject": "nebula",
+      "message": "Baseline injected main-scene draw failure",
+      "time": "2026-11-11T18:57:36.987Z"
+    }
+  ]
+}

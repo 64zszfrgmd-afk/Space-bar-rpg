@@ -11,7 +11,7 @@ const host=live?null:await servePages({folder:process.env.SPACEBAR_HERO_FOLDER,b
 const url=live||host.origin+base,prefix=process.env.SPACEBAR_HERO_SAVE_PREFIX||'',key=prefix+'spacebar-restored-v020';
 const output=resolve('test-results/hero-appearance',live?'https':'staged');await mkdir(output,{recursive:true});
 const ids=['human','crystal','mycelian','orbion','ribbon'],names=['Путешественник','Кристаллид','Мицелиец','Орбион','Лентокрыл'],reports=[];
-const fixture={version:'0.21.1',credits:321,energy:76,mood:82,buzz:0,story:6,travelUnlocked:true,venue:'nebula',visited:['nebula','rust'],inventory:['station-pass'],decisions:['docks:open','pass:digital'],quests:{party:'done',syrup:'done'},jobs:{coil:{status:'done',progress:1}},met:['zip'],relations:{zip:{points:7,greetDay:0,treatDay:0,gift:true}},hero:{name:'Тестовый путешественник',species:'crystal',color:'#f2c19e',accessory:'none',dance:0}};
+const fixture={version:'0.21.2',credits:321,energy:76,mood:82,buzz:0,story:6,travelUnlocked:true,venue:'nebula',visited:['nebula','rust'],inventory:['station-pass'],decisions:['docks:open','pass:digital'],quests:{party:'done',syrup:'done'},jobs:{coil:{status:'done',progress:1}},met:['zip'],relations:{zip:{points:7,greetDay:0,treatDay:0,gift:true}},hero:{name:'Тестовый путешественник',species:'crystal',color:'#f2c19e',accessory:'none',dance:0}};
 const original=JSON.stringify({version:'0.21.0',credits:777,story:6}),legacy=JSON.stringify(fixture);
 try{
  for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]){
@@ -21,7 +21,7 @@ try{
    const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),errors=[],heroes=[];
    page.on('pageerror',e=>errors.push(e.message));
    await page.addInitScript(({prefix,key,original,legacy})=>{
-    const source=prefix?'spacebar-test-0211:spacebar-restored-v020':key;
+    const source=prefix?'spacebar-test-0212:spacebar-restored-v020':key;
     if(!localStorage.getItem(source))localStorage.setItem(source,legacy);
     if(prefix&&!localStorage.getItem('spacebar-restored-v020'))localStorage.setItem('spacebar-restored-v020',original);
     const native=HTMLCanvasElement.prototype.getContext,seen=new WeakSet();window.__heroContexts=0;
@@ -30,10 +30,10 @@ try{
    await page.goto(url);const ready=()=>page.locator('#startup[hidden]').waitFor({state:'attached',timeout:30000});await ready();
    assert.equal(await page.evaluate(()=>window.spaceBarTest),undefined);
    const snap=()=>page.evaluate(()=>window.spaceBar.getSnapshot());
-   assert.equal((await snap()).version,'0.21.2');assert.equal((await snap()).state.credits,321);assert.equal((await snap()).state.story,6);
+   assert.equal((await snap()).version,'0.21.3');assert.equal((await snap()).state.credits,321);assert.equal((await snap()).state.story,6);
    assert.equal((await snap()).heroModel.species,'crystal');
    const progress=s=>({credits:s.credits,story:s.story,inventory:s.inventory,quests:s.quests,jobs:s.jobs,relations:s.relations,met:s.met});
-   const tap=async selector=>{const e=page.locator(selector);await e.scrollIntoViewIfNeeded();assert.ok(await e.evaluate(el=>{const r=el.getBoundingClientRect();return r.height>=44&&document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('button')===el}),selector);await e.tap()};
+   const tap=async selector=>{const e=page.locator(selector);if(!selector.includes('species-'))await e.scrollIntoViewIfNeeded();assert.ok(await e.evaluate(el=>{const r=el.getBoundingClientRect();return r.height>=44&&document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('button')===el}),selector);await e.tap()};
    const close=async()=>{if((await snap()).paused)await tap('#dialog-dismiss')};
    const menu=async action=>{await close();await tap('#menu');await tap('[data-action="'+action+'"]')};
    const preview=async(id,minHeight=100)=>{
@@ -66,7 +66,7 @@ try{
    const shot=async(name)=>{const file=engineName+'-'+name+'.png';await page.screenshot({path:resolve(output,file)});return file};
    for(const [index,id] of ids.entries()){
     await menu('appearance');const before=await snap();await tap('[data-action="species-'+id+'"]');
-    const model=(await snap()).heroModel;assert.equal(model.species,id);assert.equal(model.modelCount,1);assert.equal((await snap()).state.hero.species,id);assert.deepEqual(progress((await snap()).state),progress(before.state));
+    const model=(await snap()).heroModel;assert.equal((await snap()).avatar.avatarBuildStatus,'ready');assert.equal((await snap()).avatar.renderedSpecies,id);assert.ok((await snap()).avatar.avatarFrame.pixels>300,'avatar contributes visible pixels to the real main framebuffer');assert.equal(model.species,id);assert.equal(model.modelCount,1);assert.equal((await snap()).state.hero.species,id);assert.deepEqual(progress((await snap()).state),progress(before.state));
     assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).hero.species,key),id);
     const image=await preview(id),editor=await shot(id+'-editor'),modelImage=engineName+'-'+id+'-model.png';
     await page.locator('#hero-preview').screenshot({path:resolve(output,modelImage)});await close();
@@ -89,11 +89,21 @@ try{
     await menu('residents');await tap('[data-action="approach-borks"]');
     await page.waitForFunction(()=>{const s=window.spaceBar.getSnapshot();return !s.navigation&&s.selectedNpc==='borks'&&s.flow.flow.code==='READY_TO_TALK'},undefined,{timeout:60000});
     await tap('#interact');assert.match(await page.locator('#dialog-title').innerText(),/Боркс/);const interaction=await shot(id+'-interaction');await close();
+    await menu('map');await tap('[data-action="travel-rust"]');await page.waitForFunction(()=>window.spaceBar.getSnapshot().world.renderedLocation==='rust');
+    await tap('#camera');await tap('#camera');await menu('world-status');const travelReport=JSON.parse(await page.locator('textarea[aria-label="Диагностический отчёт"]').inputValue());
+    assert.equal(travelReport.renderedSpecies,id);assert.equal(travelReport.avatarGeometrySignature,model.signature);assert.ok(travelReport.avatarFrame.pixels>300,'visible after travel');await close();const travel=await shot(id+'-after-travel');
+    await menu('map');await tap('[data-action="travel-nebula"]');await page.waitForFunction(()=>window.spaceBar.getSnapshot().world.renderedLocation==='nebula');
     const beforeReload=progress((await snap()).state);await page.reload();await ready();const restored=await snap();
     assert.equal(restored.state.hero.species,id);assert.equal(restored.heroModel.signature,model.signature);assert.deepEqual(progress(restored.state),beforeReload);
     assert.equal(await page.evaluate(()=>window.__heroContexts),1);
-    heroes.push({id,name:names[index],geometry:model,preview:image,modelImage,editor,third,walking:walkingShot,dance,seated,firstPerson,interaction,persisted:true});
+    heroes.push({id,name:names[index],geometry:model,preview:image,modelImage,editor,third,walking:walkingShot,dance,seated,firstPerson,interaction,travel,persisted:true});
     console.log(engineName+': '+id+' real preview, walking/dance/seat/interaction, camera modes and reload passed');
+   }
+   const sequence=[];
+   for(const id of ['human','orbion','ribbon','crystal','orbion','mycelian','ribbon']){
+    await menu('appearance');const before=await snap();await tap('[data-action="species-'+id+'"]');await close();const after=await snap();
+    assert.equal(after.state.hero.species,id);assert.equal(after.avatar.renderedSpecies,id);assert.equal(after.avatar.avatarModelCount,1);assert.ok(after.avatar.avatarFrame.pixels>300);
+    assert.equal(after.player.x,before.player.x);assert.equal(after.player.z,before.player.z);assert.deepEqual(progress(after.state),progress(before.state));sequence.push({id,geometry:after.avatar.avatarGeometrySignature,frame:after.avatar.avatarFrame});
    }
    assert.equal(new Set(heroes.map(h=>h.geometry.signature)).size,5);assert.equal(new Set(heroes.map(h=>h.preview.maskHash)).size,5);
    await menu('appearance');const stable=await snap();
@@ -105,21 +115,27 @@ try{
    const failed=await snap();assert.equal(failed.state.hero.species,stable.state.hero.species);assert.equal(failed.heroModel.signature,stable.heroModel.signature);assert.equal(failed.heroModel.revision,stable.heroModel.revision);
    assert.match(await page.locator('[data-notice]').innerText(),/Прежний вид/);
    await tap('[data-action="species-human"]');assert.equal((await snap()).heroModel.species,'human');await close();
+   await menu('appearance');const beforeMainFailure=await snap();
+   await page.evaluate(()=>{document.addEventListener('click',function arm(e){if(e.target.closest('[data-action="species-orbion"]')){document.removeEventListener('click',arm,true);const p=WebGL2RenderingContext.prototype,native=p.drawElements;p.drawElements=function(...args){if(this.getParameter(this.FRAMEBUFFER_BINDING)===null){p.drawElements=native;throw Error('Injected main-scene draw failure')}return native.apply(this,args)}}},true)});
+   await tap('[data-action="species-orbion"]');const mainFailure=await snap();
+   assert.equal(mainFailure.state.hero.species,beforeMainFailure.state.hero.species);assert.equal(mainFailure.heroModel.signature,beforeMainFailure.heroModel.signature);assert.equal(mainFailure.heroModel.revision,beforeMainFailure.heroModel.revision);
+   assert.equal(mainFailure.avatar.avatarBuildStatus,'failed');assert.equal(mainFailure.avatar.lastAvatarError.stage,'main-scene');assert.match(await page.locator('[data-notice]').innerText(),/Прежний вид/);
+   await tap('[data-action="species-orbion"]');assert.equal((await snap()).avatar.renderedSpecies,'orbion');await close();
    for(const viewport of [{width:320,height:568},{width:568,height:320}]){
-    await page.setViewportSize(viewport);await menu('appearance');await tap('[data-action="species-ribbon"]');await preview('ribbon',70);
+    await page.setViewportSize(viewport);await menu('appearance');await tap('[data-action="species-ribbon"]');await preview('ribbon',45);
     await shot('layout-'+viewport.width+'x'+viewport.height);await close();
    }
    if(prefix){
-    assert.equal(await page.evaluate(()=>localStorage.getItem('spacebar-test-0211:spacebar-restored-v020')),legacy);
+    assert.equal(await page.evaluate(()=>localStorage.getItem('spacebar-test-0212:spacebar-restored-v020')),legacy);
     assert.equal(await page.evaluate(()=>localStorage.getItem('spacebar-restored-v020')),original);
    }
-   assert.deepEqual(errors,[]);reports.push({engine:engineName,url,version:'0.21.2',build:(await snap()).flow.build,physicalIPhoneTested:false,heroes,oneWebGLContext:true,failureRollback:true,progressPreserved:true,legacyTestSaveCopied:!!prefix,errors});
+   assert.deepEqual(errors,[]);reports.push({engine:engineName,url,version:'0.21.3',build:(await snap()).flow.build,physicalIPhoneTested:false,heroes,sequence,mainFramebufferRollback:true,oneWebGLContext:true,failureRollback:true,progressPreserved:true,legacyTestSaveCopied:!!prefix,errors});
    if(cdp)await cdp.detach();
    console.log('PASS '+engineName+': 5 actual hero geometries and mobile previews; no DEV positioning/camera; all poses, save and GPU-failure rollback');
   }finally{await browser.close()}
  }
  await writeFile(resolve(output,'results.json'),JSON.stringify({testedAt:new Date().toISOString(),reports},null,2)+'\n');
- const columns=['modelImage','editor','third','walking','dance','seated','firstPerson','interaction'];
- const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Space Bar RPG 0.21.2 — герой</title><style>body{font:16px system-ui;background:#17142b;color:#eee;padding:16px}section{display:flex;gap:12px;overflow:auto}img{width:230px}article{min-width:230px}code{word-break:break-all}</style><h1>0.21.2 — реальные снимки выбора героя</h1><p>Настоящие touch-кнопки production UI; камера не подменяется тестовым кодом. WebKit на Linux, физический iPhone не подключён.</p>'+reports.map(r=>'<h2>'+r.engine+'</h2>'+r.heroes.map(h=>'<h3>'+h.name+' · геометрия '+h.geometry.signature+'</h3><p>Вершины: '+h.geometry.vertices+'; видимая высота примерки: '+Math.round(h.preview.shownHeight)+' px. Перезагрузка: OK.</p><section>'+columns.map(c=>'<article><img src="'+h[c]+'"><p>'+c+'</p></article>').join('')+'</section>').join('')).join('')+'<p><a href="results.json">JSON результатов</a></p>';
+ const columns=['modelImage','editor','third','walking','dance','seated','firstPerson','interaction','travel'];
+ const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Space Bar RPG 0.21.3 — герой</title><style>body{font:16px system-ui;background:#17142b;color:#eee;padding:16px}section{display:flex;gap:12px;overflow:auto}img{width:230px}article{min-width:230px}code{word-break:break-all}</style><h1>0.21.3 — реальные снимки выбора героя</h1><p>Настоящие touch-кнопки production UI; камера не подменяется тестовым кодом. WebKit на Linux, физический iPhone не подключён.</p>'+reports.map(r=>'<h2>'+r.engine+'</h2>'+r.heroes.map(h=>'<h3>'+h.name+' · геометрия '+h.geometry.signature+'</h3><p>Вершины: '+h.geometry.vertices+'; видимая высота примерки: '+Math.round(h.preview.shownHeight)+' px. Перезагрузка: OK.</p><section>'+columns.map(c=>'<article><img src="'+h[c]+'"><p>'+c+'</p></article>').join('')+'</section>').join('')).join('')+'<p><a href="results.json">JSON результатов</a></p>';
  await writeFile(resolve(output,'index.html'),html);
 }finally{if(host)await host.close()}

@@ -36,6 +36,10 @@ button{min-height:44px}
 .modal{height:85vh;height:min(760px,calc(100dvh - 72px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))}.modal-body{flex:1}
 @media(max-height:500px){#interact{top:108px;bottom:auto;max-width:calc(100vw - 160px);white-space:nowrap;padding:8px;font-size:11px}}
 .hero-preview{display:block;width:100%;height:clamp(150px,25vh,230px);object-fit:contain;background:#19152d;border:1px solid #655885;border-radius:18px;margin:10px 0 14px}
+.species-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;position:sticky;top:0;background:#201b35;z-index:1;padding:4px 0}
+.modal .species-picker button{margin:0;min-height:48px;padding:7px 3px;font-size:12px;line-height:1.3;text-align:center;overflow-wrap:anywhere}
+.species-picker button[aria-pressed=true]{border-color:#8ee8de;background:#3c4260}
+@media(max-height:500px){.species-picker{grid-template-columns:repeat(5,minmax(0,1fr))}.modal-body[data-panel=appearance]>h2,.modal-body[data-panel=appearance]>p:first-of-type{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.modal-body[data-panel=appearance] .hero-preview{height:85px;margin:3px 0}.modal .species-picker button{font-size:10px;min-height:44px}}
 /* Reserve the joystick column even when system-font metrics allow two action buttons in a row. */
 @media(max-width:700px){.actions{max-width:min(220px,calc(100vw - 168px))}}
 @media(max-width:700px) and (min-height:501px){#interact{bottom:calc(230px + env(safe-area-inset-bottom,0px))}}

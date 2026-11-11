@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type {GameState,SpeciesId} from '../game/types';
+import {SPECIES_IDS} from '../game/types';
 import {disposeGroup} from './aliens';
 import {validateModel} from './camera';
 
@@ -8,15 +9,19 @@ export type HeroProfile=GameState['hero'];
 function ribbon(points:number[][],width:number){
  const path=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p as [number,number,number]))),samples=path.getPoints(16),positions:number[]=[],indices:number[]=[];
  samples.forEach((p,i)=>{
-  const tangent=path.getTangent(i/(samples.length-1)),side=tangent.cross(new THREE.Vector3(0,0,1)).normalize().multiplyScalar(width*(.2+.8*Math.sin(Math.PI*i/(samples.length-1)))/2);
-  positions.push(...p.clone().add(side).toArray(),...p.clone().sub(side).toArray());
-  if(i<samples.length-1){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2)}
+  const t=i/(samples.length-1),tangent=path.getTangent(t).normalize();
+  const side=new THREE.Vector3().crossVectors(tangent,Math.abs(tangent.z)>.95?new THREE.Vector3(0,1,0):new THREE.Vector3(0,0,1)).normalize().applyAxisAngle(tangent,t*Math.PI*.8);
+  const normal=new THREE.Vector3().crossVectors(tangent,side).normalize().multiplyScalar(.045),edge=side.multiplyScalar(width*(.35+.65*Math.sin(Math.PI*t))/2);
+  for(const [a,b] of [[1,1],[-1,1],[-1,-1],[1,-1]])positions.push(...p.clone().addScaledVector(edge,a).addScaledVector(normal,b).toArray());
+  if(i<samples.length-1)for(let k=0;k<4;k++){const a=i*4+k,b=i*4+(k+1)%4;indices.push(a,b,b+4,a,b+4,a+4)}
  });
+ indices.push(0,2,1,0,3,2);const end=(samples.length-1)*4;indices.push(end,end+1,end+2,end,end+2,end+3);
  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();return geometry;
 }
 
 // This factory is exclusively for the player. Existing NPC geometry stays in aliens.ts.
 export function createHeroModel(profile:HeroProfile):THREE.Group{
+ if(!SPECIES_IDS.includes(profile.species))throw Error('Неизвестный вид героя: '+profile.species);
  const model=new THREE.Group();model.name='hero-model';model.userData.heroSpecies=profile.species;
  model.userData.eyeHeight=({human:1.7,crystal:1.75,mycelian:1.5,orbion:1.6,ribbon:2.15} satisfies Record<SpeciesId,number>)[profile.species];
  const skin=new THREE.MeshStandardMaterial({color:profile.color,roughness:.6,flatShading:profile.species==='crystal',side:profile.species==='ribbon'?THREE.DoubleSide:THREE.FrontSide});
@@ -48,13 +53,13 @@ export function createHeroModel(profile:HeroProfile):THREE.Group{
    mesh(new THREE.CapsuleGeometry(.08,.26,2,8),skin,0,-.25,0,leg);ball(.14,white,side*.04,-.5,.06,[1,.65,1.3],leg);
    mesh(new THREE.CapsuleGeometry(.06,.35,2,8),skin,0,-.23,0,arm);ball(.1,glow,0,-.45,.02,[1,1,1],arm);
   }else if(profile.species==='orbion'){
-   mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(),new THREE.Vector3(side*.08,-.23,.12),new THREE.Vector3(side*.12,-.52,.2)]),10,.075,6,false),skin,0,0,0,leg);
-   mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(),new THREE.Vector3(side*.24,-.12,.06),new THREE.Vector3(side*.17,-.28,.24)]),8,.055,6,false),glow,0,0,0,arm);
+   mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(),new THREE.Vector3(side*.3,-.22,.15),new THREE.Vector3(side*.45,-.57,.3)]),10,.105,8,false),skin,0,0,0,leg);
+   mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(),new THREE.Vector3(side*.36,-.15,-.15),new THREE.Vector3(side*.48,-.42,-.26)]),8,.08,8,false),glow,0,0,0,arm);
   }else{
-   mesh(ribbon([[0,0,0],[side*.08,-.24,.12],[side*.2,-.51,-.04],[side*.12,-.71,.07]],.19),glow,0,0,0,leg);
-   mesh(ribbon([[0,0,0],[side*.47,-.12,.04],[side*.6,-.55,-.1],[side*.2,-1.1,.08]],.25),glow,0,0,0,arm);
+   mesh(ribbon([[0,0,0],[side*.13,-.24,.26],[side*.3,-.51,-.18],[side*.17,-.71,.18]],.28),glow,0,0,0,leg);
+   mesh(ribbon([[0,0,0],[side*.65,-.12,.35],[side*.85,-.55,-.3],[side*.35,-1.1,.22]],.38),glow,0,0,0,arm);
    const fin=joint('ribbon-fin-'+suffix,side*.2,1.93,-.12);fin.userData.flap=side;
-   mesh(ribbon([[0,0,0],[side*.54,.15,-.15],[side*.7,-.35,-.2],[side*.38,-.9,-.1]],.2),skin,0,0,0,fin);
+   mesh(ribbon([[0,0,0],[side*.68,.18,-.45],[side*.98,-.35,-.7],[side*.48,-.92,-.38]],.4),skin,0,0,0,fin);
   }
  }
  if(profile.species==='human'){
@@ -74,12 +79,13 @@ export function createHeroModel(profile:HeroProfile):THREE.Group{
   mesh(new THREE.CylinderGeometry(.73,.73,.04,20),dark,0,1.73,0);eyes([-.1,.1],1.49,.21);
   for(let i=0;i<7;i++)ball(.07,glow,Math.cos(i*2.4)*.48,1.97,Math.sin(i*2.4)*.43,[1,.5,1]);
  }else if(profile.species==='orbion'){
-  ball(.65,skin,0,1.36,0,[1,1,.88]);
-  mesh(new THREE.TorusGeometry(.83,.04,6,40).rotateX(Math.PI/2+.18),glow,0,1.3,0);
-  eyes([-.25,0,.25],1.6,.53,.1);
+  ball(.73,skin,0,1.36,0,[1,1,.98]);
+  mesh(new THREE.TorusGeometry(.93,.06,8,40).rotateX(Math.PI/2+.32),glow,0,1.3,0);
+  eyes([-.27,0,.27],1.6,.63,.1);
+  for(const side of [-1,0,1])ball(.11,glow,side*.32,1.68,-.62,[1,1,1.4]);
   for(let i=0;i<4;i++){
-   const angle=i*Math.PI/2,limb=joint('orbit-tentacle-'+i,Math.cos(angle)*.39,.91,Math.sin(angle)*.32);limb.userData.tentacle=i;
-   mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(),new THREE.Vector3(Math.cos(angle)*.15,-.25,Math.sin(angle)*.15),new THREE.Vector3(Math.cos(angle)*.27,-.48,Math.sin(angle)*.3)]),10,.065,6,false),skin,0,0,0,limb);
+   const angle=i*Math.PI/2+Math.PI/4,limb=joint('orbit-tentacle-'+i,Math.cos(angle)*.45,.93,Math.sin(angle)*.45);limb.userData.tentacle=i;
+   mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(),new THREE.Vector3(Math.cos(angle)*.26,-.23,Math.sin(angle)*.26),new THREE.Vector3(Math.cos(angle)*.54,-.62,Math.sin(angle)*.54)]),10,.1,8,false),skin,0,0,0,limb);
   }
  }else{
   mesh(new THREE.CapsuleGeometry(.19,.9,3,10).scale(.9,1.2,.7),skin,0,1.3,0);ball(.24,skin,0,2.15,0,[.9,1.25,.75]);
@@ -102,9 +108,12 @@ export function heroGeometry(model:THREE.Object3D){
  visit(model);return {species:model.userData.heroSpecies as SpeciesId,signature:(hash>>>0).toString(16).padStart(8,'0'),meshes,vertices,triangles};
 }
 
-export function replaceHero(state:GameState,player:THREE.Group,patch:Partial<HeroProfile>={},prepare?:(model:THREE.Group)=>void,protectedMaterials:THREE.Material[]=[]){
+export function replaceHero(state:GameState,player:THREE.Group,patch:Partial<HeroProfile>={},prepare?:(model:THREE.Group)=>void,protectedMaterials:THREE.Material[]=[],present?:(model:THREE.Group)=>void){
  const profile={...state.hero,...patch},candidate=createHeroModel(profile);
  try{validateModel(candidate);prepare?.(candidate)}catch(error){disposeGroup(candidate);throw error}
- const previous=[...player.children];player.add(candidate);for(const child of previous)disposeGroup(child,protectedMaterials);
+ const previous=[...player.children],position=player.position.clone(),rotation=player.rotation.clone(),scale=player.scale.clone();
+ for(const child of previous)child.removeFromParent();player.add(candidate);
+ try{present?.(candidate)}catch(error){disposeGroup(candidate);for(const child of previous)player.add(child);player.position.copy(position);player.rotation.copy(rotation);player.scale.copy(scale);throw error}
+ for(const child of previous)disposeGroup(child,protectedMaterials);
  state.hero=profile;return candidate;
 }

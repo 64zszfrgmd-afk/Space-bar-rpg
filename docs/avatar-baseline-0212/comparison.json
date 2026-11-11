@@ -1,0 +1,310 @@
+{
+  "fixture": "neutral comparison, actual factory; production UI tested separately",
+  "reports": [
+    {
+      "engine": "chromium",
+      "images": [
+        {
+          "id": "human",
+          "view": "rear",
+          "geometry": {
+            "species": "human",
+            "signature": "da8a36ba",
+            "meshes": 21,
+            "vertices": 2625,
+            "triangles": 3972
+          },
+          "pixels": 6936,
+          "width": 82,
+          "height": 137,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "2614a1f498a3bb2992af1a0b2f97523ec85444cf7d10e8f7e93540f6ce12ab7b",
+          "file": "chromium-rear-human.png"
+        },
+        {
+          "id": "crystal",
+          "view": "rear",
+          "geometry": {
+            "species": "crystal",
+            "signature": "f64e2844",
+            "meshes": 18,
+            "vertices": 1416,
+            "triangles": 1836
+          },
+          "pixels": 6690,
+          "width": 84,
+          "height": 141,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "aca827c0dd6230073da181edadc7c5d2f4f63ef12865c810470f33c2ccc35249",
+          "file": "chromium-rear-crystal.png"
+        },
+        {
+          "id": "mycelian",
+          "view": "rear",
+          "geometry": {
+            "species": "mycelian",
+            "signature": "be574f52",
+            "meshes": 22,
+            "vertices": 3452,
+            "triangles": 5148
+          },
+          "pixels": 9030,
+          "width": 116,
+          "height": 144,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "0e9670980c9dcd4c3570bf6f8ae585ad358690b2453835cdfb30f58358b15d33",
+          "file": "chromium-rear-mycelian.png"
+        },
+        {
+          "id": "orbion",
+          "view": "rear",
+          "geometry": {
+            "species": "orbion",
+            "signature": "43c2262f",
+            "meshes": 16,
+            "vertices": 2184,
+            "triangles": 3408
+          },
+          "pixels": 9086,
+          "width": 130,
+          "height": 132,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "79beb727be34f6f0a66ebf8bef99927de931643f5b65c3c02879a0615b7bafd5",
+          "file": "chromium-rear-orbion.png"
+        },
+        {
+          "id": "ribbon",
+          "view": "rear",
+          "geometry": {
+            "species": "ribbon",
+            "signature": "97cce8de",
+            "meshes": 17,
+            "vertices": 2009,
+            "triangles": 2956
+          },
+          "pixels": 10008,
+          "width": 160,
+          "height": 183,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "4b9eb2947cb1c24f81d5e9cf6c1e140a9ea0d960e388622cf88057417ae437e1",
+          "file": "chromium-rear-ribbon.png"
+        },
+        {
+          "id": "human",
+          "view": "side",
+          "geometry": {
+            "species": "human",
+            "signature": "da8a36ba",
+            "meshes": 21,
+            "vertices": 2625,
+            "triangles": 3972
+          },
+          "pixels": 5864,
+          "width": 67,
+          "height": 145,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "53b7527f2fc76e3dd6d00ee9f152cd8e3754e64729c02033b78420b119ce28ef",
+          "file": "chromium-side-human.png"
+        },
+        {
+          "id": "crystal",
+          "view": "side",
+          "geometry": {
+            "species": "crystal",
+            "signature": "f64e2844",
+            "meshes": 18,
+            "vertices": 1416,
+            "triangles": 1836
+          },
+          "pixels": 4404,
+          "width": 58,
+          "height": 158,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "70e7e04056724fad73c21da5b46a36bd19c0d419fa17cb8ba40cc2bfade15bd2",
+          "file": "chromium-side-crystal.png"
+        },
+        {
+          "id": "mycelian",
+          "view": "side",
+          "geometry": {
+            "species": "mycelian",
+            "signature": "be574f52",
+            "meshes": 22,
+            "vertices": 3452,
+            "triangles": 5148
+          },
+          "pixels": 8392,
+          "width": 116,
+          "height": 155,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "dffe9d5bd4eab0957e6f6a256704878be18c4996cce73603a74c824dcc0ec247",
+          "file": "chromium-side-mycelian.png"
+        },
+        {
+          "id": "orbion",
+          "view": "side",
+          "geometry": {
+            "species": "orbion",
+            "signature": "43c2262f",
+            "meshes": 16,
+            "vertices": 2184,
+            "triangles": 3408
+          },
+          "pixels": 8752,
+          "width": 128,
+          "height": 136,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "36871fac054cc7b6cfb1640387d198c14881ddcf301db0b6608d5e027a252c72",
+          "file": "chromium-side-orbion.png"
+        },
+        {
+          "id": "ribbon",
+          "view": "side",
+          "geometry": {
+            "species": "ribbon",
+            "signature": "97cce8de",
+            "meshes": 17,
+            "vertices": 2009,
+            "triangles": 2956
+          },
+          "pixels": 3410,
+          "width": 47,
+          "height": 204,
+          "camera": {
+            "position": [
+              0,
+              4.3,
+              6
+            ],
+            "fov": 62,
+            "aspect": 0.65
+          },
+          "worldScale": [
+            1,
+            1,
+            1
+          ],
+          "maskHash": "47ef28cf36a7b72af92b25ee088cd5799974159671f9209613cf1a0117a4797c",
+          "file": "chromium-side-ribbon.png"
+        }
+      ]
+    }
+  ]
+}

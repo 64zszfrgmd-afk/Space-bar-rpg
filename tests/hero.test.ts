@@ -59,4 +59,25 @@ describe('actual playable hero geometry',()=>{
    const player=new THREE.Group();replaceHero(state,player);expect(heroGeometry(player.children[0]).species).toBe(species);disposeGroup(player);
   }
  });
+ it('leaves the three working species byte-identical to 0.21.2',()=>{
+  for(const [species,signature] of [['human','da8a36ba'],['crystal','f64e2844'],['mycelian','be574f52']] as const){const model=createHeroModel({...freshState().hero,species});expect(heroGeometry(model).signature).toBe(signature);disposeGroup(model)}
+ });
+ it('has finite solid ribbon surfaces and broad Orbion geometry in rear and side projections',()=>{
+  for(const species of ['orbion','ribbon'] as const){
+   const model=createHeroModel({...freshState().hero,species}),size=new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
+   expect(size.x).toBeGreaterThan(1.6);expect(size.z).toBeGreaterThan(1.1);
+   model.traverse(node=>{if(node instanceof THREE.Mesh){expect([...node.geometry.getAttribute('normal').array].every(Number.isFinite)).toBe(true);if(species==='ribbon'&&node.geometry.type==='BufferGeometry'){const b=new THREE.Box3().setFromBufferAttribute(node.geometry.getAttribute('position') as THREE.BufferAttribute);expect(b.max.z-b.min.z).toBeGreaterThan(.08)}}});
+   disposeGroup(model);
+  }
+ });
+ it('keeps the old model, transforms and state when actual scene presentation fails',()=>{
+  const state=freshState(),before=structuredClone(state),player=new THREE.Group();player.position.set(3,.4,-2);player.rotation.set(0,Math.PI,0);const old=createHeroModel(state.hero);player.add(old);let oldDisposed=false;old.traverse(n=>{if(n instanceof THREE.Mesh)n.geometry.addEventListener('dispose',()=>oldDisposed=true)});
+  expect(()=>replaceHero(state,player,{species:'orbion'},undefined,[],()=>{player.position.y=5;throw Error('Main framebuffer draw failed')})).toThrow('Main framebuffer draw failed');
+  expect(state).toEqual(before);expect(player.children).toEqual([old]);expect(player.position.toArray()).toEqual([3,.4,-2]);expect(oldDisposed).toBe(false);expect(player.rotation.toArray()).toEqual([0,Math.PI,0,'XYZ']);posePlayer(player,null,1,false,false);expect(new THREE.Box3().setFromObject(player).min.y).toBeGreaterThan(-.1);disposeGroup(player);
+ });
+ it('replaces and disposes models throughout the reported seven-step sequence without changing progress',()=>{
+  const state=freshState();state.credits=321;state.story=6;state.inventory=['station-pass'];state.quests.party='done';const before=structuredClone(state),player=new THREE.Group();player.position.set(2,0,1);let previous:THREE.Group|undefined;
+  for(const species of ['human','orbion','ribbon','crystal','orbion','mycelian','ribbon'] as const){let disposed=false;previous?.traverse(n=>{if(n instanceof THREE.Mesh)n.geometry.addEventListener('dispose',()=>disposed=true)});const next=replaceHero(state,player,{species});expect(player.children).toEqual([next]);if(previous){expect(disposed).toBe(true);expect(previous.parent).toBeNull()}expect({...state,hero:before.hero}).toEqual(before);expect(player.position.toArray()).toEqual([2,0,1]);previous=next}
+  disposeGroup(player);
+ });
 });

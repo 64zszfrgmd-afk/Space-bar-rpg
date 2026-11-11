@@ -18,8 +18,8 @@ try{
    for(const [profile,fixture] of Object.entries(fixtures)){
     const p=await b.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),errors=[],dialogs=[];p.on('pageerror',e=>errors.push(e.message));
     if(fixture)await p.addInitScript(f=>{if(!localStorage.getItem('spacebar-restored-v020'))localStorage.setItem('spacebar-restored-v020',JSON.stringify(f))},fixture);
-    await p.goto(host.origin+pagesBase+'?build=0.21.2');await p.locator('#startup[hidden]').waitFor({state:'attached'});assert.equal(await p.evaluate(()=>window.spaceBarTest),undefined);
-    const snap=()=>p.evaluate(()=>window.spaceBar.getSnapshot());assert.equal((await snap()).version,'0.21.2');await p.locator('#flow-panel').waitFor();
+    await p.goto(host.origin+pagesBase+'?build=0.21.3');await p.locator('#startup[hidden]').waitFor({state:'attached'});assert.equal(await p.evaluate(()=>window.spaceBarTest),undefined);
+    const snap=()=>p.evaluate(()=>window.spaceBar.getSnapshot());assert.equal((await snap()).version,'0.21.3');await p.locator('#flow-panel').waitFor();
     const tap=async(selector)=>{const e=p.locator(selector);await e.scrollIntoViewIfNeeded();const hit=await e.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {correct:top?.closest('button')===el,width:r.width,height:r.height}});assert.ok(hit.correct,'unblocked touch target '+selector);assert.ok(hit.height>=44,selector+' min 44px');await e.tap()};
     const close=async()=>{if((await snap()).paused)await tap('#dialog-dismiss')};
     const menu=async(action)=>{await close();await tap('#menu');await tap('[data-action="'+action+'"]')};
@@ -41,7 +41,7 @@ try{
     }
     await p.reload();await p.locator('#startup[hidden]').waitFor({state:'attached'});assert.equal((await snap()).state.venue,'cabin');assert.equal((await snap()).state.credits,credits);if(profile!=='fresh')assert.equal((await snap()).state.quests.syrup,'done');
     await p.setViewportSize({width:568,height:320});await menu('map');await tap('[data-action="travel-nebula"]');await approach('borks');await tap('#dialog-dismiss');assert.equal((await snap()).paused,false);await p.screenshot({path:new URL(engineName+'-'+profile+'-landscape.png',out).pathname});
-    assert.deepEqual(errors,[]);reports.push({engine:engineName,profile,version:'0.21.2',journeys,dialogs,credits,persisted:true,productionOnly:true,physicalIPhoneTested:false,errors});console.log(`PASS ${engineName} ${profile}: full touch pass/menu/travel/control/approach/dialogue/save journey; ${dialogs.length} dialogues`);await p.close();
+    assert.deepEqual(errors,[]);reports.push({engine:engineName,profile,version:'0.21.3',journeys,dialogs,credits,persisted:true,productionOnly:true,physicalIPhoneTested:false,errors});console.log(`PASS ${engineName} ${profile}: full touch pass/menu/travel/control/approach/dialogue/save journey; ${dialogs.length} dialogues`);await p.close();
    }
   }finally{await b.close()}
  }
