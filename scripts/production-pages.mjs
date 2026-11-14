@@ -82,9 +82,12 @@ export async function stageRollback(archive='artifacts/published-before-0213.tar
 export async function guard(){
  const response=await download('https://api.github.com/repos/64zszfrgmd-afk/Space-bar-rpg/branches/main');const main=JSON.parse(response).commit.sha;
  assert.equal(main,process.env.GITHUB_SHA,'A newer main exists: refusing stale publication');
+ const marker=await fetch(baseline.url+'production-build.json',{signal:AbortSignal.timeout(25000)});
+ if(marker.status!==404){assert.equal(marker.status,200);assertPublicationAllowed(await marker.json())}
  // Immediately before first production publication, all 233 inputs must still match.
  for(const [name,digest] of Object.entries(baseline.files))assert.equal(hash(await download(baseline.url+name)),digest,'Published baseline changed; capture and review it before deploy: '+name);
 }
+export function assertPublicationAllowed(metadata){assert.notEqual(metadata.rollback,true,'Production rollback freeze is active: review a new release and baseline before publishing again')}
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
  const commands={snapshot,assemble,pack,verify:verifyCandidate,'verify-live':verifyLive,guard,'stage-rollback':stageRollback,'verify-restored':()=>verifyPublishedFiles('rollback-site')};assert.ok(Object.hasOwn(commands,process.argv[2]),'Unknown production Pages command');await commands[process.argv[2]](...process.argv.slice(3));
 }
