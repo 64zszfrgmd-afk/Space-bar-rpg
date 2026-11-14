@@ -8,7 +8,7 @@ export const dist = fileURLToPath(new URL('../dist/', import.meta.url));
 
 // Strict static hosting: no Vite history fallback masking a missing JS/CSS asset.
 export async function servePages(options={}) {
-  const folder=resolve(options.folder??dist),base=options.base??pagesBase;
+  const folder=resolve(options.folder??process.env.SPACEBAR_PAGES_FOLDER??dist),base=options.base??pagesBase;
   const server = createServer(async (request, response) => {
     try {
       const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);

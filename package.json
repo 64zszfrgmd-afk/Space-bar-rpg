@@ -10,6 +10,7 @@
     "test": "npm run test:unit && npm run build && node --test tests/*.test.mjs",
     "test:browser": "node tests/mobile-launch.mjs && node tests/gameplay.mjs && node tests/history-world.mjs && node tests/world-visual.mjs && node tests/user-journey.mjs && node tests/hero-appearance.mjs && node tests/avatar-comparison.mjs",
     "test:unit": "vitest run",
+    "test:production": "node tests/production-release.mjs",
     "test:gameplay": "node tests/gameplay.mjs",
     "test:world": "node tests/history-world.mjs",
     "test:hero": "node tests/hero-appearance.mjs && node tests/avatar-comparison.mjs",

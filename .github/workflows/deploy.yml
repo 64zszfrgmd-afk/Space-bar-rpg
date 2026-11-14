@@ -1,7 +1,7 @@
 name: Test and deploy GitHub Pages
 on:
   push:
-    branches: [main, feature/v0.21.3-avatar-fixes]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -24,11 +24,11 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, webkit]
-    if: (github.event_name != 'workflow_dispatch' || !inputs.publish_site_preview) && (github.event_name != 'pull_request' || github.head_ref != 'feature/v0.21.3-avatar-fixes')
+    needs: production_candidate
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - name: Trust this checkout inside the browser container
@@ -38,9 +38,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-candidate
+          path: production-site
       - run: npm test
+        env:
+          VITE_SAVE_PREFIX: ''
       - run: npm run test:browser
         env:
+          SPACEBAR_PAGES_FOLDER: production-site
+          SPACEBAR_BROWSERS: ${{ matrix.browser }}
+      - run: npm run test:production
+        env:
+          SPACEBAR_PAGES_FOLDER: production-site
           SPACEBAR_BROWSERS: ${{ matrix.browser }}
       - name: Save browser diagnostics
         if: always()
@@ -49,12 +60,8 @@ jobs:
           name: mobile-launch-tests-${{ matrix.browser }}
           path: test-results/
           if-no-files-found: ignore
-      - uses: actions/upload-pages-artifact@v3
-        if: github.ref == 'refs/heads/main' && matrix.browser == 'chromium'
-        with:
-          path: dist
   site_preview:
-    if: github.ref == 'refs/heads/feature/v0.21.3-avatar-fixes' && ((github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'CI-only:')) || (github.event_name == 'workflow_dispatch' && inputs.publish_site_preview))
+    if: github.ref == 'refs/heads/feature/v0.21.3-avatar-fixes' && github.event_name == 'workflow_dispatch' && inputs.publish_site_preview
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
@@ -127,24 +134,106 @@ jobs:
             test-results/hero-appearance/
             test-results/avatar-comparison/
           retention-days: 14
+  production_candidate:
+    name: production candidate and preservation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_SAVE_PREFIX: ''
+      - run: node scripts/production-pages.mjs snapshot
+      - run: node scripts/production-pages.mjs assemble
+      - run: node --test tests/*.test.mjs
+      - run: node scripts/production-pages.mjs pack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-candidate
+          path: production-site/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: published-backup-before-0213
+          path: artifacts/
+          retention-days: 90
+  recovery_point:
+    name: permanent recovery point
+    needs: production_candidate
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: production-backup-0213
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: published-backup-before-0213
+          path: artifacts
+      - name: Keep the complete current site in an immutable draft recovery release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/store-production-backup.sh
+  release_ready:
+    name: release-ready
+    if: always()
+    needs: [production_candidate, build, recovery_point]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every browser, preservation and recovery check
+        env:
+          CANDIDATE: ${{ needs.production_candidate.result }}
+          BROWSERS: ${{ needs.build.result }}
+          BACKUP: ${{ needs.recovery_point.result }}
+        run: |
+          test "$CANDIDATE" = success
+          test "$BROWSERS" = success
+          test "$BACKUP" = success
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: release_ready
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: build
+    timeout-minutes: 20
     permissions:
+      contents: read
       pages: write
       id-token: write
     concurrency:
       group: github-pages-production
       cancel-in-progress: false
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-candidate
+          path: production-site
+      - name: Verify candidate and refuse stale main or changed live inputs
+        run: |
+          node scripts/production-pages.mjs verify
+          node scripts/production-pages.mjs guard
       - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: production-site
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Check all published hashes, including unchanged test versions
+        run: node scripts/production-pages.mjs verify-live
 
   release_preview:
     if: github.event_name == 'workflow_dispatch' && inputs.publish_preview && github.ref == 'refs/heads/feature/v0.21-world-fixes'
