@@ -6,3 +6,13 @@ test-results/
 .playwright-browsers/
 
 artifacts/
+preview-dist/
+pages-preview/
+
+preview-dist-0213/
+pages-preview-0213/
+
+hosting/published-before-0213.tar.gz
+production-backup/
+production-site/
+rollback-site/

@@ -12,7 +12,7 @@ import {meet,relation} from '../src/game/social';
 import type {StoryAction} from '../src/game/story';
 
 describe('catalog consistency',()=>{
- it('publishes matching build identity and catalog counts',()=>{expect(JSON.parse(readFileSync(new URL('../public/version.json',import.meta.url),'utf8'))).toMatchObject({version:'0.21.0',revision:'world-fixes-1',destinations:venues.length,npc:npcDefinitions.length,playableSpecies:species.length,quests:localJobs.length+3,multiplayer:false})});
+ it('publishes matching build identity and catalog counts',()=>{expect(JSON.parse(readFileSync(new URL('../public/version.json',import.meta.url),'utf8'))).toMatchObject({version:'0.21.3',revision:'avatar-scene-2',destinations:venues.length,npc:npcDefinitions.length,playableSpecies:species.length,quests:localJobs.length+3,multiplayer:false})});
  it('has 9 unique destinations, three new planets, 23 NPCs and five playable species',()=>{
   expect(venues.map(v=>v.id).sort()).toEqual([...VENUE_IDS].sort());expect(venues.filter(v=>v.kind==='club')).toHaveLength(4);expect(venues.filter(v=>v.kind==='bar')).toHaveLength(4);expect(new Set(venues.map(v=>v.planet)).size).toBe(4);
   expect(npcDefinitions.map(n=>n.id).sort()).toEqual([...NPC_IDS].sort());expect(npcDefinitions).toHaveLength(23);expect(species.map(s=>s.id).sort()).toEqual([...SPECIES_IDS].sort());
@@ -21,7 +21,7 @@ describe('catalog consistency',()=>{
  });
  it('migrates a real previous 0.20 save while preserving its economy, friendships, quests and decisions',()=>{
   const old={schema:1,version:'0.20.0',credits:255,energy:42,mood:93,buzz:17,met:['zip','zora'],relations:{zip:{points:7,greetDay:0,treatDay:-1,gift:false}},quests:{party:'done',syrup:'done'},partyDance:15,syrupStage:2,worldTime:123,decisions:['kept']};
-  const s=normalizeState(old)!;expect(s).toMatchObject({...old,version:'0.21.0',schema:2,story:0,venue:'nebula',hero:{name:'Путешественник',species:'human'},settings:{quality:'auto',volume:.7}});expect(s.jobs.coil.status).toBe('new');expect(normalizeState(JSON.parse(JSON.stringify(s)))).toEqual(s);
+  const s=normalizeState(old)!;expect(s).toMatchObject({...old,version:'0.21.3',schema:2,story:0,venue:'nebula',hero:{name:'Путешественник',species:'human'},settings:{quality:'auto',volume:.7}});expect(s.jobs.coil.status).toBe('new');expect(normalizeState(JSON.parse(JSON.stringify(s)))).toEqual(s);
  });
  it('validates edited species, colors, quality, location and volume without breaking an old save',()=>{
   expect(normalizeState({...freshState(),hero:{name:' <Лира> ',species:'unknown',color:'javascript:bad',accessory:'broken'},settings:{quality:'bad',volume:4},venue:'echo',visited:['fake']})).toMatchObject({hero:{name:'<Лира>',species:'human',color:'#f2c19e',accessory:'none'},settings:{quality:'auto',volume:1},venue:'nebula',visited:['nebula']});

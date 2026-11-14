@@ -17,7 +17,7 @@ if not (root / 'dist/index.html').is_file():
 metadata = json.loads((root / 'public/version.json').read_text()) if (root / 'public/version.json').exists() else {}
 if metadata.get('version') != version or json.loads((root / 'dist/version.json').read_text()) != metadata:
     raise SystemExit('Build/version identity is stale; run npm run build.')
-manifest = {'revision': metadata.get('revision','restore-1'), 'version': version, 'baseVersion': '0.20.0', 'sourceCommit': commit,
+manifest = {'revision': metadata.get('revision','restore-1'), 'version': version, 'baseVersion': '0.21.0', 'sourceCommit': commit,
             'files': {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
 out = root / 'artifacts'
 out.mkdir(exist_ok=True)

@@ -7,7 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       publish_preview:
-        description: Publish tested 0.21.0 ZIP and visual evidence (world-fixes branch only)
+        description: Publish tested 0.21.1 ZIP and visual evidence (world-fixes branch only)
+        type: boolean
+        default: false
+        required: false
+      publish_site_preview:
+        description: Publish /test/0.21.3/ while retaining all three existing versions
         type: boolean
         default: false
         required: false
@@ -15,6 +20,122 @@ permissions:
   contents: read
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    needs: production_candidate
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trust this checkout inside the browser container
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-candidate
+          path: production-site
+      - run: npm test
+        env:
+          VITE_SAVE_PREFIX: ''
+      - run: npm run test:browser
+        env:
+          SPACEBAR_PAGES_FOLDER: production-site
+          SPACEBAR_BROWSERS: ${{ matrix.browser }}
+      - run: npm run test:production
+        env:
+          SPACEBAR_PAGES_FOLDER: production-site
+          SPACEBAR_BROWSERS: ${{ matrix.browser }}
+      - name: Save browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-launch-tests-${{ matrix.browser }}
+          path: test-results/
+          if-no-files-found: ignore
+  site_preview:
+    if: github.ref == 'refs/heads/feature/v0.21.3-avatar-fixes' && github.event_name == 'workflow_dispatch' && inputs.publish_site_preview
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+    timeout-minutes: 35
+    environment:
+      name: github-pages-test
+      url: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.3/
+    concurrency:
+      group: github-pages-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trust this checkout inside the browser container
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build isolated test path and storage namespace
+        env:
+          VITE_SAVE_PREFIX: 'spacebar-test-0213:'
+        run: npx vite build --base=/Space-bar-rpg/test/0.21.3/ --outDir=preview-dist-0213
+      - run: node scripts/prepare-pages-preview.mjs check-production
+      - run: node scripts/prepare-pages-preview.mjs assemble
+      - run: node scripts/preview-pages-smoke.mjs
+      - name: Test all five avatars through the mobile editor
+        env:
+          SPACEBAR_HERO_FOLDER: pages-preview-0213/test/0.21.3
+          SPACEBAR_HERO_BASE: /Space-bar-rpg/test/0.21.3/
+          SPACEBAR_HERO_SAVE_PREFIX: 'spacebar-test-0213:'
+        run: npm run test:hero
+      - run: node scripts/prepare-pages-preview.mjs publish-report
+      - name: Refuse to overwrite a newer production deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-pages-preview.mjs guard-main
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          name: github-pages-test-0213
+          path: pages-preview-0213
+      - name: Publish the preserved site with its new test subdirectory
+        id: publish
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-test-0213
+      - run: node scripts/prepare-pages-preview.mjs verify-published
+      - name: Test the published HTTPS address in Chromium and WebKit
+        env:
+          SPACEBAR_LIVE_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.3/
+        run: node scripts/preview-pages-smoke.mjs
+      - name: Test avatar changes on the published HTTPS site
+        env:
+          SPACEBAR_HERO_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/0.21.3/
+          SPACEBAR_HERO_SAVE_PREFIX: 'spacebar-test-0213:'
+        run: node tests/hero-appearance.mjs
+      - name: Save staged and live browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-preview-0213-evidence
+          path: |
+            test-results/pages-preview/
+            test-results/hero-appearance/
+            test-results/avatar-comparison/
+          retention-days: 14
+  production_candidate:
+    name: production candidate and preservation
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -24,37 +145,95 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run test:browser
-      - name: Save browser diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
+      - run: npm run build
+        env:
+          VITE_SAVE_PREFIX: ''
+      - run: node scripts/production-pages.mjs snapshot
+      - run: node scripts/production-pages.mjs assemble
+      - run: node --test tests/*.test.mjs
+      - run: node scripts/production-pages.mjs pack
+      - uses: actions/upload-artifact@v4
         with:
-          name: mobile-launch-tests
-          path: test-results/
-          if-no-files-found: ignore
-      - uses: actions/upload-pages-artifact@v3
+          name: production-candidate
+          path: production-site/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
         with:
-          path: dist
+          name: published-backup-before-0213
+          path: artifacts/
+          retention-days: 90
+  recovery_point:
+    name: permanent recovery point
+    needs: production_candidate
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: production-backup-0213
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: published-backup-before-0213
+          path: artifacts
+      - name: Keep the complete current site in an immutable draft recovery release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/store-production-backup.sh
+  release_ready:
+    name: release-ready
+    if: always()
+    needs: [production_candidate, build, recovery_point]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every browser, preservation and recovery check
+        env:
+          CANDIDATE: ${{ needs.production_candidate.result }}
+          BROWSERS: ${{ needs.build.result }}
+          BACKUP: ${{ needs.recovery_point.result }}
+        run: |
+          test "$CANDIDATE" = success
+          test "$BROWSERS" = success
+          test "$BACKUP" = success
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: release_ready
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: build
+    timeout-minutes: 20
     permissions:
+      contents: read
       pages: write
       id-token: write
     concurrency:
       group: github-pages-production
       cancel-in-progress: false
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-candidate
+          path: production-site
+      - name: Verify candidate and refuse stale main or changed live inputs
+        run: |
+          node scripts/production-pages.mjs verify
+          node scripts/production-pages.mjs guard
       - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: production-site
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Check all published hashes, including unchanged test versions
+        run: node scripts/production-pages.mjs verify-live
 
   release_preview:
     if: github.event_name == 'workflow_dispatch' && inputs.publish_preview && github.ref == 'refs/heads/feature/v0.21-world-fixes'
@@ -64,10 +243,10 @@ jobs:
     permissions:
       contents: write
     concurrency:
-      group: v021-world-fixes-release
+      group: v0211-touch-flow-release
       cancel-in-progress: false
     env:
-      RELEASE_TAG: v0.21.0-preview.1
+      RELEASE_TAG: v0.21.1-preview.1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -90,11 +269,11 @@ jobs:
           set -euo pipefail
           notes="$RUNNER_TEMP/spacebar-release-notes.md"
           cat > "$notes" <<EOF
-          **Space Bar RPG 0.21.0 — исправление отображения миров и NPC** поверх main 0.20 R2.
+          **Space Bar RPG 0.21.1 — диагностическая сборка для повторной проверки iPhone** поверх main 0.21.0.
 
-          Исправлен узкий портретный обзор: виден целый интерьер и жители; есть наведение камеры на NPC. Переход строит и отрисовывает новую сцену перед сменой состояния; при ошибке сохраняет предыдущий мир и прогресс. Добавлены диагностика и повтор загрузки. Сохранены девять интерьеров, три новые планеты, 23 NPC, пять героев, десять заданий, экономика, напитки, сиденья, танцы, ритм и сохранения.
+          Проверен полный путь касание → пропуск → сцена → управление. Добавлены явные причины отказа, предъявление пропуска на карте, согласование старых сохранений и резервная копия. Постоянная диагностическая панель и журнал касаний; выбор NPC и обычный подход по проходам. Физическая причина конкретного iPhone без нового отчёта остаётся неподтверждённой. Переход строит и отрисовывает новую сцену перед сменой состояния; при ошибке сохраняет предыдущий мир и прогресс. Добавлены диагностика и повтор загрузки. Сохранены девять интерьеров, три новые планеты, 23 NPC, пять героев, десять заданий, экономика, напитки, сиденья, танцы, ритм и сохранения.
 
-          ZIP игры содержит исходники и готовый dist. RELEASE-MANIFEST.json указывает коммит и SHA-256 файлов. Отдельный visual-report.zip содержит реальные PNG/HTML/JSON Chromium и WebKit: 9 локаций, 23 NPC, 5 героев, видимые пиксели, диалоги и проверку отказа загрузки. PNG контактных листов доступны отдельно. У архивов есть .sha256. Все девять локаций и имена жителей перечислены в docs/WORLD-FIXES-021.md.
+          ZIP игры содержит исходники и готовый dist. RELEASE-MANIFEST.json указывает коммит и SHA-256 файлов. Отдельный visual-report.zip содержит реальные PNG/HTML/JSON Chromium и WebKit: 9 локаций, 23 NPC, 5 героев, видимые пиксели и дополнительные полные production touch-сценарии нового прохождения и сохранений 0.20 R2 / 0.21. PNG контактных листов доступны отдельно. У архивов есть .sha256. Все девять локаций и имена жителей перечислены в docs/TOUCH-TRAVEL-0211.md.
 
           Запуск: Node.js 22.12+, npm install, npm run preview -- --port 5173, путь /Space-bar-rpg/. На iPhone открыть HTTPS-предпросмотр порта 5173 в Safari. ZIP в приложении «Файлы» не запускает игру.
 
@@ -112,8 +291,8 @@ jobs:
             fi
             gh release edit "$RELEASE_TAG" --target "$GITHUB_SHA" --notes-file "$notes"
           else
-            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --prerelease --title 'Space Bar RPG 0.21.0 — исправления мира и NPC' --notes-file "$notes"
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --prerelease --title 'Space Bar RPG 0.21.1 — повторная проверка iPhone' --notes-file "$notes"
           fi
-          gh release upload "$RELEASE_TAG" artifacts/spacebar-rpg-0.21.0.zip artifacts/spacebar-rpg-0.21.0.zip.sha256 artifacts/spacebar-rpg-0.21.0-visual-report.zip artifacts/spacebar-rpg-0.21.0-visual-report.zip.sha256 test-results/world-visual/*-contact-sheet.png --clobber
+          gh release upload "$RELEASE_TAG" artifacts/spacebar-rpg-0.21.1.zip artifacts/spacebar-rpg-0.21.1.zip.sha256 artifacts/spacebar-rpg-0.21.1-visual-report.zip artifacts/spacebar-rpg-0.21.1-visual-report.zip.sha256 test-results/world-visual/*-contact-sheet.png --clobber
           gh release edit "$RELEASE_TAG" --draft=false --prerelease
           gh release view "$RELEASE_TAG" --json url --jq .url >> "$GITHUB_STEP_SUMMARY"

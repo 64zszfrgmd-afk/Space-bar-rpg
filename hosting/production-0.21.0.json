@@ -1,0 +1,16 @@
+{
+  "version": "0.21.0",
+  "mainCommit": "ffa62be7404559a51157a86efbc3785b7dece82a",
+  "runId": 42682075173,
+  "artifactId": 13702963333,
+  "url": "https://64zszfrgmd-afk.github.io/Space-bar-rpg/",
+  "archiveSha256": "d31e1a799199240d2f9700eb141e5a8d207a746967abb7590162b54215f80128",
+  "files": {
+    "index.html": "19c8bbd19c80053396ccb5c37160f46a33590e7b40a98433d076dd080a20eae8",
+    "assets/index-C4wiFE6t.js": "5723239076f9f1ea63b1c4d398a0cceafe67601d548e07ee82416b0fa190b319",
+    "assets/index-CsZ4JZXV.css": "6ee3ed7366db9e94cb4c6281aa24dae2a107c81803f964ce7a703224ea178c33",
+    "assets/three-B-EU1qQF.js": "fb0b407a634a514fb6910345fb8125156bc9867adff3b12f770edbf5e0191593",
+    "THIRD-PARTY-NOTICES.txt": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
+    "version.json": "02b0eaa5d019f12e063aff4122d9e34056b3c25e97cb77fedd1a85972f915517"
+  }
+}

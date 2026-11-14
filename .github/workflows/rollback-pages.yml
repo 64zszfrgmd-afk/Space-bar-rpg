@@ -1,0 +1,46 @@
+name: Restore published production snapshot
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Owner approval required. Type RESTORE-0.21.0 to restore the published files.
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  restore:
+    if: inputs.confirmation == 'RESTORE-0.21.0'
+    environment:
+      name: github-pages
+      url: https://64zszfrgmd-afk.github.io/Space-bar-rpg/
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download the immutable complete recovery snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir artifacts
+          gh release download production-backup-0.21.0-20261114-ffa62be --dir artifacts
+          cd artifacts
+          sha256sum --check published-before-0213.tar.gz.sha256
+      - name: Restore old entry files, preserving all test versions and cached new assets
+        run: node scripts/production-pages.mjs stage-rollback
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: rollback-site
+      - uses: actions/deploy-pages@v4
+      - run: node scripts/production-pages.mjs verify-restored

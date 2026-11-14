@@ -22,7 +22,7 @@ try{
    const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.addInitScript(()=>{if(!localStorage.getItem('browser-seeded')){localStorage.setItem('spacebar-v1',JSON.stringify({credits:500,mood:40,buzz:50,met:['Зора · навигатор']}));localStorage.setItem('spacebar-save-v2','untouched');localStorage.setItem('browser-seeded','1')}});
    await page.goto(host.origin+pagesBase);await page.locator('#startup[hidden]').waitFor({state:'attached'});
-   assert.equal(await page.evaluate(()=>window.spaceBar.version),'0.21.0');assert.equal(await page.evaluate(()=>window.spaceBarTest),undefined);
+   assert.equal(await page.evaluate(()=>window.spaceBar.version),'0.21.3');assert.equal(await page.evaluate(()=>window.spaceBarTest),undefined);
    const snap=()=>page.evaluate(()=>window.spaceBar.getSnapshot());
    assert.ok((await snap()).state.met.includes('zora'));console.log(name+': production keyboard route to Borks');
    // Actual keyboard travel in production; no teleport or mutable test bridge.
