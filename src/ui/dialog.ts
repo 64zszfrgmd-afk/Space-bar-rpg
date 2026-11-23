@@ -5,7 +5,7 @@ export class Dialog {
   constructor(private shade:HTMLElement,private content:HTMLElement,private reset:()=>void){
     document.getElementById('dialog-dismiss')?.addEventListener('click',()=>this.close());
     shade.addEventListener('click',e=>{if(e.target===shade)this.close()});
-    shade.addEventListener('keydown',e=>{if(e.code!=='Tab')return;e.preventDefault();const buttons=[...shade.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)')],i=buttons.indexOf(document.activeElement as HTMLElement);buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length]?.focus()});
+    shade.addEventListener('keydown',e=>{if(e.code!=='Tab')return;e.preventDefault();const buttons=[...shade.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)')].filter(b=>b.tabIndex>=0&&b.getClientRects().length>0),i=buttons.indexOf(document.activeElement as HTMLElement);buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length]?.focus()});
   }
   show(title:string,text:string){if(!this.isOpen)this.previous=document.activeElement as HTMLElement;this.epoch++;this.reset();this.shade.classList.remove('hidden');this.content.replaceChildren();delete this.content.dataset.panel;this.content.scrollTop=0;const h=document.createElement('h2');h.id='dialog-title';h.textContent=title;this.content.append(h);this.text(text)}
   panel(name:string){this.content.dataset.panel=name;this.content.querySelector('p')?.setAttribute('data-panel-intro','true')}

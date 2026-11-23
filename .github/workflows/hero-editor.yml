@@ -1,0 +1,177 @@
+name: Hero editor tabs and isolated preview
+on:
+  push:
+    branches: [feature/hero-editor-tabs]
+  pull_request:
+    branches: [feature/v0.21.3-avatar-fixes]
+permissions:
+  contents: read
+env:
+  EDITOR_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+        env:
+          VITE_SAVE_PREFIX: ''
+      - run: node scripts/production-pages.mjs snapshot
+      - run: node scripts/production-pages.mjs assemble
+      - name: Build a separate editor URL and save namespace
+        run: npx vite build --base=/Space-bar-rpg/test/hero-editor-tabs/ --outDir=editor-dist
+        env:
+          VITE_SAVE_PREFIX: 'spacebar-test-hero-editor:'
+      - run: node scripts/editor-preview.mjs assemble
+        env:
+          NODE_USE_ENV_PROXY: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: editor-production-candidate
+          path: production-site/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: editor-game
+          path: editor-pages/test/hero-editor-tabs/
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: editor-full-site
+          path: |
+            editor-pages/
+            test-results/editor-preview/
+  browser:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        suite: [core, world, hero]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+    env:
+      SPACEBAR_BROWSERS: ${{ matrix.browser }}
+      SPACEBAR_PAGES_FOLDER: production-site
+    steps:
+      - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: editor-production-candidate
+          path: production-site
+      - name: Launch, existing gameplay, story, save upgrade and rollback
+        if: matrix.suite == 'core'
+        run: |
+          node tests/mobile-launch.mjs
+          node tests/gameplay.mjs
+          node tests/history-world.mjs
+          npm run test:production
+      - name: Nine visible locations, 23 NPCs and native interaction journeys
+        if: matrix.suite == 'world'
+        run: |
+          node tests/world-visual.mjs
+          node tests/user-journey.mjs
+      - uses: actions/download-artifact@v4
+        if: matrix.suite == 'hero'
+        with:
+          name: editor-game
+          path: editor-runtime
+      - name: Five species, both cameras, atomic model updates and comparison images
+        if: matrix.suite == 'hero'
+        run: |
+          node tests/hero-appearance.mjs
+          node tests/avatar-comparison.mjs
+      - name: Real touch tabs, 15 world dances, iPhone layouts and isolated saves
+        if: matrix.suite == 'hero'
+        run: node tests/editor-tabs.mjs
+        env:
+          SPACEBAR_EDITOR_FOLDER: editor-runtime
+          SPACEBAR_EDITOR_BASE: /Space-bar-rpg/test/hero-editor-tabs/
+          SPACEBAR_EDITOR_SAVE_PREFIX: 'spacebar-test-hero-editor:'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: editor-${{ matrix.browser }}-${{ matrix.suite }}
+          path: test-results/
+          retention-days: 30
+  editor_ready:
+    name: editor-ready
+    if: always()
+    needs: [prepare, browser]
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "$PREPARE" = success && test "$BROWSERS" = success
+        env:
+          PREPARE: ${{ needs.prepare.result }}
+          BROWSERS: ${{ needs.browser.result }}
+  preview:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/hero-editor-tabs'
+    needs: editor_ready
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+    environment:
+      name: github-pages-test
+      url: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/hero-editor-tabs/
+    concurrency:
+      group: github-pages-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: editor-full-site
+          path: .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: editor-*-hero
+          path: editor-evidence
+      - run: node scripts/editor-preview.mjs report
+      - run: node scripts/editor-preview.mjs guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          name: github-pages-editor
+          path: editor-pages
+      - uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-editor
+      - run: node scripts/editor-preview.mjs verify
+      - name: Verify the actual HTTPS preview through both mobile browser engines
+        run: node tests/editor-tabs.mjs
+        env:
+          SPACEBAR_EDITOR_URL: https://64zszfrgmd-afk.github.io/Space-bar-rpg/test/hero-editor-tabs/
+          SPACEBAR_EDITOR_BASE: /Space-bar-rpg/test/hero-editor-tabs/
+          SPACEBAR_EDITOR_SAVE_PREFIX: 'spacebar-test-hero-editor:'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: editor-https-evidence
+          path: test-results/
+          retention-days: 30

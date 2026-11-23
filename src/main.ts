@@ -224,7 +224,8 @@ function applyHero(patch:Partial<HeroProfile>={}):boolean{
 function heroSnapshot(){
  const model=player.children[0];if(!model)return null;
  return {...heroGeometry(model),revision:heroRevision,modelCount:player.children.length,visible:player.visible,eyeHeight:model.userData.eyeHeight??1.65,
-  pose:Object.fromEntries(['leg-left','leg-right','arm-left','arm-right'].map(name=>{const limb=model.getObjectByName(name);return [name,limb?{position:limb.position.toArray(),rotation:limb.rotation.toArray()}:null]}))};
+  pose:Object.fromEntries(['leg-left','leg-right','arm-left','arm-right'].map(name=>{const limb=model.getObjectByName(name);return [name,limb?{position:limb.position.toArray(),rotation:limb.rotation.toArray()}:null]})),
+  appendagePose:(()=>{const limbs:{name:string;rotation:number[]}[]=[];model.traverse(n=>{if(typeof n.userData.tentacle==='number'||typeof n.userData.flap==='number')limbs.push({name:n.name,rotation:[n.rotation.x,n.rotation.y,n.rotation.z]})});return limbs})()};
 }
 function activeNpcs(){return npcs.filter(n=>(n.venue??'nebula')===state.venue)}
 let generated:Room|null=null,activeObstacles=obstacles,activeTiles=tiles;
@@ -294,7 +295,11 @@ function updateRhythm(){
  el('rhythm-panel').classList.toggle('beat-active',inWindow);el('rhythm-progress').style.width=Math.min(100,Math.max(0,(time+1.5)/7*100))+'%';
  if(rhythmFinished(rhythm,state.worldTime)){const result=settleRhythm(state,rhythm)!;if(state.venue==='meridian'&&result.score>=600)addJobProgress(state,'beat',600);stopRhythm();finishAction(`Ритм: ${result.score}/800 · награда ${result.reward} ◈. ${result.score>=600?'Зал аплодирует!':'Практика делает галактику громче.'}`)}
 }
-const history=new HistoryUI({state:()=>state,dialog,close:closeDialog,menu,talk,changed:finishAction,go:switchVenue,approach:approachNpc,hero:applyHero,heroPreview:()=>{if(!heroPreview)throw Error('Предпросмотр героя недоступен');return heroPreview},quality:()=>{quality=state.settings.quality;renderer.setPixelRatio(renderRatio())},rhythm:startRhythm,onFloor:()=>onFloor()&&!rhythm&&!seating.active});
+function startEditorDance(){
+ if(!onFloor()||seating.active||rhythm)return false;
+ walking=null;closeDialog();input.reset();leaveOverview();setDance(true);toast('Танец начался. Движение сохранено для всех видов героя.');return true;
+}
+const history=new HistoryUI({state:()=>state,dialog,close:closeDialog,menu,talk,changed:finishAction,go:switchVenue,approach:approachNpc,hero:applyHero,heroPreview:()=>{if(!heroPreview)throw Error('Предпросмотр героя недоступен');return heroPreview},quality:()=>{quality=state.settings.quality;renderer.setPixelRatio(renderRatio())},rhythm:startRhythm,onFloor:()=>onFloor()&&!rhythm&&!seating.active,dance:startEditorDance});
 
 const snapshot=()=>({version:VERSION,avatar:avatarReport(),heroModel:heroSnapshot(),flow:diagnosticReport(),navigation:walking?{id:walking.id,remaining:walking.points.length}:null,selectedNpc,revision:CONTENT_REVISION,world:{location:router.id,renderedLocation,status:router.status,presentations:router.presentations,overview,visibleNpcIds:activeNpcs().filter(n=>modelIsVisible(n.mesh)).map(n=>n.id),issues:diagnostics.snapshot()},rhythm:rhythm?{start:rhythm.start,hits:[...rhythm.hits],misses:rhythm.misses}:null,state:structuredClone(state),player:{x:player.position.x,z:player.position.z,y:player.position.y},firstPerson,camera:{yaw,pitch,height:camera.position.y},dancing,seated:seating.active?.id??null,paused:dialog.isOpen,interaction:nearest()?.title});
 Object.defineProperty(window,'spaceBar',{value:Object.freeze({version:VERSION,getSnapshot:snapshot}),writable:false});

@@ -11,6 +11,7 @@ export function createSeating(scene:THREE.Object3D,obstacles:{x:number;z:number;
   return seats;
 }
 export function posePlayer(player:THREE.Group,seated:Seat|null,time:number,moving:boolean,dancing:boolean,style=0){
+  dancing=dancing&&!seated&&!moving;
   player.scale.y=seated?.78:1;
   player.position.y=seated?seated.height-.625*.78:dancing?Math.abs(Math.sin(time*7))*.17:moving?Math.sin(time*12)*.035:0;
   player.rotation.z=dancing?Math.sin(time*7)*.15:0;
@@ -20,12 +21,25 @@ export function posePlayer(player:THREE.Group,seated:Seat|null,time:number,movin
     else{leg.position.y=seated?.65:.3;leg.position.z=seated?.24:0}
     leg.rotation.x=seated?(rest?-Math.PI/2:Math.PI/2):moving?Math.sin(time*12+i*Math.PI)*.45:dancing?Math.sin(time*7+i)*.4:0;
   }
-  for(const [i,name] of ['arm-left','arm-right'].entries())player.getObjectByName(name)!.rotation.x=seated?-.35:dancing?Math.sin(time*7+i)*.7:moving?Math.sin(time*12+i*Math.PI)*.35:0;
+  for(const [i,name] of ['arm-left','arm-right'].entries()){
+    const arm=player.getObjectByName(name)!;arm.rotation.x=seated?-.35:dancing?Math.sin(time*7+i)*.7:moving?Math.sin(time*12+i*Math.PI)*.35:0;
+    const restZ=arm.userData.restZ??(arm.userData.restZ=arm.rotation.z);
+    arm.rotation.z=restZ+(dancing&&style===2?Math.sin(time*5+i)*.25:0);
+  }
   if(dancing&&style===1){player.position.y=Math.abs(Math.sin(time*8))*.08;player.rotation.z=Math.sin(time*8)*.07;for(const [i,name] of ['leg-left','leg-right'].entries())player.getObjectByName(name)!.rotation.x=Math.sin(time*8+i*Math.PI)*.65}
   if(dancing&&style===2){player.position.y=.02;player.rotation.z=Math.sin(time*5)*.1;for(const [i,name] of ['arm-left','arm-right'].entries())player.getObjectByName(name)!.rotation.x=-1.2+Math.sin(time*5+i)*.4}
   if(seated)player.rotation.y=seated.yaw+Math.PI;
   player.traverse(node=>{
-    if(typeof node.userData.tentacle==='number')node.rotation.x=seated?-.9:Math.sin(time*(dancing?7:3)+node.userData.tentacle)*.2;
-    if(typeof node.userData.flap==='number')node.rotation.z=Math.sin(time*(dancing?7:moving?9:2))*node.userData.flap*(dancing?.35:.15);
+    if(typeof node.userData.tentacle==='number'){
+      const phase=node.userData.tentacle;
+      node.rotation.x=seated?-.9:dancing&&style===1?Math.sin(time*8+phase*Math.PI)*.45:dancing&&style===2?-.55+Math.sin(time*5-phase*.9)*.65:Math.sin(time*(dancing?7:3)+phase)*.2;
+      node.rotation.z=dancing&&style===2?Math.sin(time*5-phase*.9)*.25:0;
+    }
+    if(typeof node.userData.flap==='number'){
+      const side=node.userData.flap;
+      node.rotation.z=dancing&&style===1?Math.sin(time*8+side*Math.PI/2)*side*.18:dancing&&style===2?Math.sin(time*5+side*.8)*side*.62:Math.sin(time*(dancing?7:moving?9:2))*side*(dancing?.35:.15);
+      node.rotation.x=dancing&&style===1?Math.sin(time*8+side*Math.PI/2)*.2:0;
+      node.rotation.y=dancing&&style===2?Math.sin(time*5-side*.8)*.3:0;
+    }
   });
 }
