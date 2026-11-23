@@ -16,3 +16,7 @@ hosting/published-before-0213.tar.gz
 production-backup/
 production-site/
 rollback-site/
+editor-dist/
+editor-pages/
+editor-runtime/
+editor-evidence/
