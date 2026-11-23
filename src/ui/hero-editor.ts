@@ -57,7 +57,7 @@ export class HeroEditor {
   for(const [id,title] of danceNames.entries()){
    const b=this.choice((s.hero.dance===id?'✓ ':'')+title,()=>{this.h.state().hero.dance=id as 0|1|2;this.h.changed('Танцевальное движение сохранено: '+title);this.activate('dances')},'dance-style-'+id);b.setAttribute('aria-pressed',String(s.hero.dance===id));picker.append(b);
   }
-  this.choice('Исполнить выбранный танец',()=>{if(!this.h.dance())this.h.dialog.notice('Подойди на светящийся танцпол и встань с сиденья. Выбранное движение уже сохранено.')},'editor-dance').classList.add('primary');
+  this.choice('Исполнить танец',()=>{if(!this.h.dance())this.h.dialog.notice('Подойди на светящийся танцпол и встань с сиденья. Выбранное движение уже сохранено.')},'editor-dance').classList.add('primary');
  }
  private appearance(){
   const d=this.h.dialog;
